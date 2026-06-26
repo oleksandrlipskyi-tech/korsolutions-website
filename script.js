@@ -1,4 +1,3 @@
-// Посилання на твою базу
 const databaseUrl = 'https://korsolutions-jobs-default-rtdb.europe-west1.firebasedatabase.app/jobs.json';
 const botToken = '8018570948:AAEP421r9xEg7R587HYdkCGJTwiV-s6zkl0';
 const chatId = '5426420290';
@@ -6,35 +5,33 @@ const chatId = '5426420290';
 let allJobs = [];
 let filteredJobs = [];
 let currentPage = 1;
-const jobsPerPage = 5; // Скільки вакансій на одній сторінці (можеш змінити)
+const jobsPerPage = 6; // Рівно 6 вакансій на сторінку (сітка 2 в ряд, 3 ряди в глибину)
 
-// Активні фільтри
 let activeFilters = { countries: [], categories: [], genders: [] };
 let searchQuery = "";
+// Сховище для відстеження розгорнутих текстів
+let expandedJobs = {};
 
-// 1. Завантаження бази даних
 function loadJobsFromDatabase() {
-    document.getElementById('jobList').innerHTML = '<p style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Завантаження...</p>';
+    document.getElementById('jobList').innerHTML = '<p style="text-align:center; grid-column: 1/-1; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Завантаження актуальних вакансій...</p>';
     fetch(databaseUrl)
     .then(response => response.json())
     .then(data => {
         if (data) {
-            // Зберігаємо ID вакансій для майбутнього редагування в адмінці
             allJobs = Object.entries(data).map(([id, job]) => ({ id, ...job })).reverse();
         } else {
             allJobs = [];
         }
         filteredJobs = [...allJobs];
         
-        buildDynamicCheckboxes(); // Автоматично створюємо фільтри з наявних країн/сфер
+        buildDynamicCheckboxes();
         renderJobs();
     })
     .catch(() => {
-        document.getElementById('jobList').innerHTML = '<p style="color:red; text-align:center;">Помилка завантаження.</p>';
+        document.getElementById('jobList').innerHTML = '<p style="color:red; text-align:center; grid-column: 1/-1; padding: 40px;">Помилка завантаження бази даних.</p>';
     });
 }
 
-// 2. Автоматична генерація чекбоксів
 function buildDynamicCheckboxes() {
     const countries = [...new Set(allJobs.map(j => j.country))].filter(Boolean);
     const categories = [...new Set(allJobs.map(j => j.category))].filter(Boolean);
@@ -47,7 +44,6 @@ function buildDynamicCheckboxes() {
         `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="categories"> ${c}</label>`
     ).join('');
 
-    // Вішаємо слухачі на всі чекбокси
     document.querySelectorAll('.filter-cb').forEach(cb => {
         cb.addEventListener('change', (e) => {
             const type = e.target.dataset.type;
@@ -59,19 +55,14 @@ function buildDynamicCheckboxes() {
     });
 }
 
-// 3. Пошук по тексту
 document.getElementById('searchInput').addEventListener('input', (e) => {
     searchQuery = e.target.value.toLowerCase();
     applyFilters();
 });
 
-// 4. Логіка застосування фільтрів та пошуку
 function applyFilters() {
     filteredJobs = allJobs.filter(job => {
-        // Пошук у назві або описі
         const matchSearch = job.title.toLowerCase().includes(searchQuery) || job.desc.toLowerCase().includes(searchQuery);
-        
-        // Фільтрація чекбоксами (якщо масив порожній - значить обрано всі)
         const matchCountry = activeFilters.countries.length === 0 || activeFilters.countries.includes(job.country);
         const matchCategory = activeFilters.categories.length === 0 || activeFilters.categories.includes(job.category);
         const matchGender = activeFilters.genders.length === 0 || (job.gender && activeFilters.genders.includes(job.gender));
@@ -79,12 +70,11 @@ function applyFilters() {
         return matchSearch && matchCountry && matchCategory && matchGender;
     });
 
-    currentPage = 1; // Скидаємо на 1 сторінку при фільтрації
+    currentPage = 1;
     renderActiveTags();
     renderJobs();
 }
 
-// 5. Виведення тегів вибраних фільтрів
 function renderActiveTags() {
     const container = document.getElementById('activeTags');
     container.innerHTML = '';
@@ -97,48 +87,52 @@ function renderActiveTags() {
 
 function removeFilter(type, val) {
     activeFilters[type] = activeFilters[type].filter(item => item !== val);
-    // Знімаємо галочку з чекбоксу
     document.querySelectorAll('.filter-cb').forEach(cb => {
         if (cb.dataset.type === type && cb.value === val) cb.checked = false;
     });
     applyFilters();
 }
 
-// 6. Виведення вакансій (Зі згортанням тексту та пагінацією)
 function renderJobs() {
     const list = document.getElementById('jobList');
     list.innerHTML = '';
 
-    // Математика для пагінації
     const start = (currentPage - 1) * jobsPerPage;
     const end = start + jobsPerPage;
     const jobsToShow = filteredJobs.slice(start, end);
 
     if (jobsToShow.length === 0) {
-        list.innerHTML = '<p style="text-align:center; color:#64748b;">За вказаними параметрами вакансій не знайдено.</p>';
+        list.innerHTML = '<p style="text-align:center; color:#64748b; grid-column: 1/-1; padding: 40px;">За вказаними параметрами вакансій не знайдено.</p>';
         document.getElementById('pagination').innerHTML = '';
         return;
     }
 
     jobsToShow.forEach(job => {
-        // Згортання тексту
-        const isLong = job.desc.length > 150;
-        const shortDesc = isLong ? job.desc.substring(0, 150) + '...' : job.desc;
-        const fullDescSafe = job.desc.replace(/"/g, '&quot;').replace(/'/g, '&#39;'); // Безпечний текст для JS
+        const isLong = job.desc.length > 120;
+        const isExpanded = expandedJobs[job.id] === true;
+        
+        // Визначаємо який текст показувати
+        const textToDisplay = (isLong && !isExpanded) ? job.desc.substring(0, 120) + '...' : job.desc;
 
         list.innerHTML += `
             <div class="job-card">
-                <h3>${job.title}</h3>
-                <div class="job-meta">
-                    <p><i class="fas fa-map-marker-alt"></i> ${job.country}</p>
-                    <p><i class="fas fa-tags"></i> ${job.category}</p>
-                    ${job.gender ? `<p><i class="fas fa-user"></i> ${job.gender}</p>` : ''}
-                </div>
-                <div class="job-salary">${job.salary}</div>
-                
-                <div id="desc-${job.id}">
-                    <p class="desc-text">${shortDesc}</p>
-                    ${isLong ? `<button class="read-more-btn" onclick="toggleDesc('${job.id}', '${fullDescSafe}', true)">Розгорнути <i class="fas fa-angle-down"></i></button>` : ''}
+                <div>
+                    <h3>${job.title}</h3>
+                    <div class="job-meta">
+                        <p><i class="fas fa-map-marker-alt"></i> ${job.country}</p>
+                        <p><i class="fas fa-tags"></i> ${job.category}</p>
+                        ${job.gender ? `<p><i class="fas fa-user"></i> ${job.gender}</p>` : ''}
+                    </div>
+                    <div class="job-salary">${job.salary}</div>
+                    
+                    <div class="desc-wrapper">
+                        <span class="desc-text">${textToDisplay}</span>
+                        ${isLong ? `
+                            <button class="read-more-btn" onclick="toggleJobDescription('${job.id}')">
+                                ${isExpanded ? 'Згорнути <i class="fas fa-angle-up"></i>' : 'Розгорнути <i class="fas fa-angle-down"></i>'}
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
 
                 <button class="btn-apply" onclick="openModal('${job.title}')">Відгукнутися</button>
@@ -149,22 +143,12 @@ function renderJobs() {
     renderPagination();
 }
 
-// Перемикач згортання/розгортання тексту
-window.toggleDesc = function(id, fullText, expand) {
-    const container = document.getElementById(`desc-${id}`);
-    if (expand) {
-        container.innerHTML = `
-            <p class="desc-text">${fullText}</p>
-            <button class="read-more-btn" onclick="toggleDesc('${id}', '${fullText}', false)">Згорнути <i class="fas fa-angle-up"></i></button>`;
-    } else {
-        const shortDesc = fullText.substring(0, 150) + '...';
-        container.innerHTML = `
-            <p class="desc-text">${shortDesc}</p>
-            <button class="read-more-btn" onclick="toggleDesc('${id}', '${fullText}', true)">Розгорнути <i class="fas fa-angle-down"></i></button>`;
-    }
-}
+// Нова 100% робоча функція перемикання опису
+window.toggleJobDescription = function(id) {
+    expandedJobs[id] = !expandedJobs[id];
+    renderJobs(); // Перемальовуємо картки з новим станом тексту
+};
 
-// 7. Логіка кнопок сторінок
 function renderPagination() {
     const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
     const pagDiv = document.getElementById('pagination');
@@ -172,12 +156,15 @@ function renderPagination() {
 
     if (totalPages <= 1) return;
 
+    // Стрілочка вліво
     pagDiv.innerHTML += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
     
+    // Цифри сторінок
     for (let i = 1; i <= totalPages; i++) {
         pagDiv.innerHTML += `<button onclick="changePage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
     }
     
+    // Стрілочка вправо
     pagDiv.innerHTML += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
 }
 
@@ -189,20 +176,16 @@ window.changePage = function(page) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Запуск при вході на сайт
 loadJobsFromDatabase();
 
-// --- АКОРДЕОНИ В САЙДБАРІ ---
 window.toggleAccordion = function(id) {
     document.getElementById(id).classList.toggle('open');
 }
 
-// --- МОБІЛЬНЕ МЕНЮ ФІЛЬТРІВ ---
 window.toggleSidebar = function() {
     document.getElementById('sidebar').classList.toggle('open');
 }
 
-// --- ВІДГУКИ ТА ТЕЛЕГРАМ (З МИНУЛОГО ЕТАПУ) ---
 function openModal(jobTitle) {
     document.getElementById('modalJobTitle').innerText = jobTitle;
     document.getElementById('jobModal').style.display = 'flex';
