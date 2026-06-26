@@ -17,11 +17,6 @@
         .input-group textarea { height: 100px; resize: vertical; }
         .btn-action { width: 100%; background: #3b82f6; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
         .btn-action:hover { background: #2563eb; }
-        .output-box { display: none; margin-top: 30px; background: #0f172a; color: #a7f3d0; padding: 20px; border-radius: 8px; position: relative; }
-        .output-box h3 { color: white; margin-bottom: 10px; font-size: 1rem; }
-        code { font-family: 'Courier New', Courier, monospace; word-break: break-all; font-size: 0.9rem; }
-        .btn-copy { position: absolute; right: 15px; top: 15px; background: #334155; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
-        .btn-copy:hover { background: #475569; }
         .back-link { display: block; text-align: center; margin-top: 20px; color: #64748b; text-decoration: none; font-size: 0.9rem; }
         .back-link:hover { color: #3b82f6; }
         #authBlock { display: block; }
@@ -31,7 +26,6 @@
 <body>
 
     <div class="admin-container">
-        <!-- Блок авторизації (Захист паролем) -->
         <div id="authBlock">
             <h1><i class="fas fa-lock"></i> Вхід в адмін-панель</h1>
             <div class="input-group">
@@ -41,13 +35,12 @@
             <button class="btn-action" onclick="checkPassword()">Увійти <i class="fas fa-sign-in-alt"></i></button>
         </div>
 
-        <!-- Блок генератора вакансій -->
         <div id="managerBlock">
-            <h1><i class="fas fa-tools"></i> Конструктор вакансій</h1>
-            <form id="jobGeneratorForm" onsubmit="generateCode(event)">
+            <h1><i class="fas fa-plus-circle"></i> Додати нову вакансію</h1>
+            <form id="jobForm" onsubmit="publishJob(event)">
                 <div class="input-group">
                     <i class="fas fa-heading"></i>
-                    <input type="text" id="jobTitle" placeholder="Назва вакансії (напр. Сортувальник одягу)" required>
+                    <input type="text" id="jobTitle" placeholder="Назва вакансії (напр. Сортувальник Amazon)" required>
                 </div>
                 <div class="input-group">
                     <i class="fas fa-globe"></i>
@@ -69,29 +62,22 @@
                 </div>
                 <div class="input-group">
                     <i class="fas fa-money-bill-wave"></i>
-                    <input type="text" id="jobSalary" placeholder="Зарплата (напр. від 1900€/міс або 230 PLN/год)" required>
+                    <input type="text" id="jobSalary" placeholder="Зарплата (напр. від 1900€/міс)" required>
                 </div>
                 <div class="input-group">
                     <i class="fas fa-align-left"></i>
-                    <textarea id="jobDesc" placeholder="Короткий опис умов роботи, обов'язків та проживання..." required></textarea>
+                    <textarea id="jobDesc" placeholder="Опис умов роботи, обов'язків та проживання..." required></textarea>
                 </div>
-                <button type="submit" class="btn-action">Згенерувати код вакансії <i class="fas fa-magic"></i></button>
+                <button type="submit" id="submitBtn" class="btn-action">Опублікувати на сайт <i class="fas fa-paper-plane"></i></button>
             </form>
-
-            <div id="outputBox" class="output-box">
-                <button class="btn-copy" onclick="copyCode()">Скопіювати</button>
-                <h3><i class="far fa-file-code"></i> Готовий код для вставки:</h3>
-                <code id="generatedCode"></code>
-                <p style="color: #94a3b8; font-size: 0.8rem; margin-top: 15px;"><i class="fas fa-info-circle"></i> Скопіюй цей рядок, зайди в свій <b>script.js</b> на GitHub і встав його всередину списку вакансій (масиву jobs).</p>
-            </div>
         </div>
 
         <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Повернутися на сайт</a>
     </div>
 
     <script>
-        // Твій пароль для входу в адмінку (можеш змінити тут 'admin123' на будь-який свій)
-        const SecretPassword = 'admin123';
+        const SecretPassword = 'admin123'; // Твій пароль для входу
+        const databaseUrl = 'https://korsolutions-jobs-default-rtdb.europe-west1.firebasedatabase.app/jobs.json';
 
         function checkPassword() {
             const entered = document.getElementById('adminPassword').value;
@@ -103,24 +89,37 @@
             }
         }
 
-        function generateCode(e) {
+        function publishJob(e) {
             e.preventDefault();
-            const title = document.getElementById('jobTitle').value.replace(/"/g, '\\"');
-            const country = document.getElementById('jobCountry').value;
-            const category = document.getElementById('jobCategory').value;
-            const salary = document.getElementById('jobSalary').value.replace(/"/g, '\\"');
-            const desc = document.getElementById('jobDesc').value.replace(/"/g, '\\"').replace(/\n/g, ' ');
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerText = 'Публікація...';
+            submitBtn.disabled = true;
 
-            const code = `{ title: "${title}", country: "${country}", category: "${category}", salary: "${salary}", desc: "${desc}" },`;
-            
-            document.getElementById('generatedCode').innerText = code;
-            document.getElementById('outputBox').style.display = 'block';
-        }
+            const newJob = {
+                title: document.getElementById('jobTitle').value,
+                country: document.getElementById('jobCountry').value,
+                category: document.getElementById('jobCategory').value,
+                salary: document.getElementById('jobSalary').value,
+                desc: document.getElementById('jobDesc').value
+            };
 
-        function copyCode() {
-            const codeText = document.getElementById('generatedCode').innerText;
-            navigator.clipboard.writeText(codeText).then(() => {
-                alert('Код успішно скопійовано у буфер обміну!');
+            fetch(databaseUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newJob)
+            })
+            .then(response => {
+                if(response.ok) {
+                    alert('✅ Вакансію успішно опубліковано на сайт!');
+                    document.getElementById('jobForm').reset();
+                } else {
+                    alert('Помилка збереження.');
+                }
+            })
+            .catch(error => alert('Помилка мережі.'))
+            .finally(() => {
+                submitBtn.innerHTML = 'Опублікувати на сайт <i class="fas fa-paper-plane"></i>';
+                submitBtn.disabled = false;
             });
         }
     </script>
