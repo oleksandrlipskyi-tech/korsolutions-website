@@ -5,11 +5,10 @@ const chatId = '5426420290';
 let allJobs = [];
 let filteredJobs = [];
 let currentPage = 1;
-const jobsPerPage = 6; // Рівно 6 вакансій на сторінку (сітка 2 в ряд, 3 ряди в глибину)
+const jobsPerPage = 6; 
 
 let activeFilters = { countries: [], categories: [], genders: [] };
 let searchQuery = "";
-// Сховище для відстеження розгорнутих текстів
 let expandedJobs = {};
 
 function loadJobsFromDatabase() {
@@ -33,8 +32,13 @@ function loadJobsFromDatabase() {
 }
 
 function buildDynamicCheckboxes() {
-    const countries = [...new Set(allJobs.map(j => j.country))].filter(Boolean);
-    const categories = [...new Set(allJobs.map(j => j.category))].filter(Boolean);
+    // РОЗБИВАЄМО КРАЇНИ ЧЕРЕЗ КОМУ І ВИДАЛЯЄМО ПРОБІЛИ
+    const rawCountries = allJobs.flatMap(j => j.country ? j.country.split(',').map(s => s.trim()) : []);
+    const countries = [...new Set(rawCountries)].filter(Boolean);
+
+    // ТЕ САМЕ РОБИМО ДЛЯ СФЕР
+    const rawCategories = allJobs.flatMap(j => j.category ? j.category.split(',').map(s => s.trim()) : []);
+    const categories = [...new Set(rawCategories)].filter(Boolean);
 
     document.getElementById('dynamicCountries').innerHTML = countries.map(c => 
         `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="countries"> ${c}</label>`
@@ -63,8 +67,14 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
 function applyFilters() {
     filteredJobs = allJobs.filter(job => {
         const matchSearch = job.title.toLowerCase().includes(searchQuery) || job.desc.toLowerCase().includes(searchQuery);
-        const matchCountry = activeFilters.countries.length === 0 || activeFilters.countries.includes(job.country);
-        const matchCategory = activeFilters.categories.length === 0 || activeFilters.categories.includes(job.category);
+        
+        // НОВА ЛОГІКА ПОШУКУ: Перевіряємо, чи збігається ХОЧА Б ОДНА з країн/сфер вакансії
+        const jobCountries = job.country ? job.country.split(',').map(s => s.trim()) : [];
+        const matchCountry = activeFilters.countries.length === 0 || jobCountries.some(c => activeFilters.countries.includes(c));
+        
+        const jobCategories = job.category ? job.category.split(',').map(s => s.trim()) : [];
+        const matchCategory = activeFilters.categories.length === 0 || jobCategories.some(c => activeFilters.categories.includes(c));
+        
         const matchGender = activeFilters.genders.length === 0 || (job.gender && activeFilters.genders.includes(job.gender));
         
         return matchSearch && matchCountry && matchCategory && matchGender;
@@ -110,17 +120,19 @@ function renderJobs() {
     jobsToShow.forEach(job => {
         const isLong = job.desc.length > 120;
         const isExpanded = expandedJobs[job.id] === true;
-        
-        // Визначаємо який текст показувати
         const textToDisplay = (isLong && !isExpanded) ? job.desc.substring(0, 120) + '...' : job.desc;
+
+        // Красиво виводимо країни та сфери, навіть якщо їх кілька
+        const formattedCountry = job.country ? job.country.split(',').map(s => s.trim()).join(', ') : '';
+        const formattedCategory = job.category ? job.category.split(',').map(s => s.trim()).join(', ') : '';
 
         list.innerHTML += `
             <div class="job-card">
                 <div>
                     <h3>${job.title}</h3>
                     <div class="job-meta">
-                        <p><i class="fas fa-map-marker-alt"></i> ${job.country}</p>
-                        <p><i class="fas fa-tags"></i> ${job.category}</p>
+                        <p><i class="fas fa-map-marker-alt"></i> ${formattedCountry}</p>
+                        <p><i class="fas fa-tags"></i> ${formattedCategory}</p>
                         ${job.gender ? `<p><i class="fas fa-user"></i> ${job.gender}</p>` : ''}
                     </div>
                     <div class="job-salary">${job.salary}</div>
@@ -143,10 +155,9 @@ function renderJobs() {
     renderPagination();
 }
 
-// Нова 100% робоча функція перемикання опису
 window.toggleJobDescription = function(id) {
     expandedJobs[id] = !expandedJobs[id];
-    renderJobs(); // Перемальовуємо картки з новим станом тексту
+    renderJobs();
 };
 
 function renderPagination() {
@@ -156,15 +167,12 @@ function renderPagination() {
 
     if (totalPages <= 1) return;
 
-    // Стрілочка вліво
     pagDiv.innerHTML += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
     
-    // Цифри сторінок
     for (let i = 1; i <= totalPages; i++) {
         pagDiv.innerHTML += `<button onclick="changePage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
     }
     
-    // Стрілочка вправо
     pagDiv.innerHTML += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
 }
 
