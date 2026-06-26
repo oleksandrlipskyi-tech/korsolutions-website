@@ -7,7 +7,7 @@ let filteredJobs = [];
 let currentPage = 1;
 const jobsPerPage = 6; 
 
-let activeFilters = { countries: [], categories: [], genders: [] };
+let activeFilters = { countries: [], categories: [], genders: [], ages: [] };
 let searchQuery = "";
 let expandedJobs = {};
 
@@ -17,14 +17,12 @@ function loadJobsFromDatabase() {
     .then(response => response.json())
     .then(data => {
         if (data) {
-            allJobs = Object.entries(data).map(([id, job]) => ({ id, ...job })).reverse();
+            allJobs = Object.entries(data).map(([id, job]) => ({ id, ...job }));
         } else {
             allJobs = [];
         }
-        filteredJobs = [...allJobs];
-        
         buildDynamicCheckboxes();
-        renderJobs();
+        applyFilters(); // Одразу застосовуємо фільтри і сортування
     })
     .catch(() => {
         document.getElementById('jobList').innerHTML = '<p style="color:red; text-align:center; grid-column: 1/-1; padding: 40px;">Помилка завантаження бази даних.</p>';
@@ -32,13 +30,14 @@ function loadJobsFromDatabase() {
 }
 
 function buildDynamicCheckboxes() {
-    // РОЗБИВАЄМО КРАЇНИ ЧЕРЕЗ КОМУ І ВИДАЛЯЄМО ПРОБІЛИ
     const rawCountries = allJobs.flatMap(j => j.country ? j.country.split(',').map(s => s.trim()) : []);
     const countries = [...new Set(rawCountries)].filter(Boolean);
 
-    // ТЕ САМЕ РОБИМО ДЛЯ СФЕР
     const rawCategories = allJobs.flatMap(j => j.category ? j.category.split(',').map(s => s.trim()) : []);
     const categories = [...new Set(rawCategories)].filter(Boolean);
+
+    const rawAges = allJobs.flatMap(j => j.age ? j.age.split(',').map(s => s.trim()) : []);
+    const ages = [...new Set(rawAges)].filter(Boolean);
 
     document.getElementById('dynamicCountries').innerHTML = countries.map(c => 
         `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="countries"> ${c}</label>`
@@ -46,6 +45,10 @@ function buildDynamicCheckboxes() {
 
     document.getElementById('dynamicCategories').innerHTML = categories.map(c => 
         `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="categories"> ${c}</label>`
+    ).join('');
+
+    document.getElementById('dynamicAges').innerHTML = ages.map(c => 
+        `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="ages"> ${c}</label>`
     ).join('');
 
     document.querySelectorAll('.filter-cb').forEach(cb => {
@@ -64,21 +67,57 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
     applyFilters();
 });
 
-function applyFilters() {
+// Кнопка скидання фільтрів
+window.resetFilters = function() {
+    activeFilters = { countries: [], categories: [], genders: [], ages: [] };
+    searchQuery = "";
+    document.getElementById('searchInput').value = "";
+    document.getElementById('statusFilter').value = "Актуальна";
+    document.getElementById('sortSelect').value = "date-desc";
+    document.getElementById('minorsOnlyFilter').checked = false;
+    
+    document.querySelectorAll('.filter-cb').forEach(cb => cb.checked = false);
+    applyFilters();
+}
+
+window.applyFilters = function() {
+    const statusReq = document.getElementById('statusFilter').value;
+    const minorsOnly = document.getElementById('minorsOnlyFilter').checked;
+    const sortMode = document.getElementById('sortSelect').value;
+
     filteredJobs = allJobs.filter(job => {
         const matchSearch = job.title.toLowerCase().includes(searchQuery) || job.desc.toLowerCase().includes(searchQuery);
         
-        // НОВА ЛОГІКА ПОШУКУ: Перевіряємо, чи збігається ХОЧА Б ОДНА з країн/сфер вакансії
+        // Статус
+        const jobStatus = job.status || 'Актуальна';
+        const matchStatus = (statusReq === 'Всі') || (jobStatus === statusReq);
+
+        // Неповнолітні
+        const matchMinors = !minorsOnly || job.minors === 'Так';
+
+        // Інші масиви (через кому)
         const jobCountries = job.country ? job.country.split(',').map(s => s.trim()) : [];
         const matchCountry = activeFilters.countries.length === 0 || jobCountries.some(c => activeFilters.countries.includes(c));
         
         const jobCategories = job.category ? job.category.split(',').map(s => s.trim()) : [];
         const matchCategory = activeFilters.categories.length === 0 || jobCategories.some(c => activeFilters.categories.includes(c));
         
+        const jobAges = job.age ? job.age.split(',').map(s => s.trim()) : [];
+        const matchAgeGroup = activeFilters.ages.length === 0 || jobAges.some(c => activeFilters.ages.includes(c));
+
         const matchGender = activeFilters.genders.length === 0 || (job.gender && activeFilters.genders.includes(job.gender));
         
-        return matchSearch && matchCountry && matchCategory && matchGender;
+        return matchSearch && matchStatus && matchMinors && matchCountry && matchCategory && matchGender && matchAgeGroup;
     });
+
+    // СОРТУВАННЯ
+    if (sortMode === 'date-desc') {
+        filteredJobs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    } else if (sortMode === 'date-asc') {
+        filteredJobs.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    } else if (sortMode === 'name-asc') {
+        filteredJobs.sort((a, b) => a.title.localeCompare(b.title));
+    }
 
     currentPage = 1;
     renderActiveTags();
@@ -88,14 +127,14 @@ function applyFilters() {
 function renderActiveTags() {
     const container = document.getElementById('activeTags');
     container.innerHTML = '';
-    ['countries', 'categories', 'genders'].forEach(type => {
+    ['countries', 'categories', 'genders', 'ages'].forEach(type => {
         activeFilters[type].forEach(val => {
             container.innerHTML += `<span class="tag">${val} <i class="fas fa-times" onclick="removeFilter('${type}', '${val}')"></i></span>`;
         });
     });
 }
 
-function removeFilter(type, val) {
+window.removeFilter = function(type, val) {
     activeFilters[type] = activeFilters[type].filter(item => item !== val);
     document.querySelectorAll('.filter-cb').forEach(cb => {
         if (cb.dataset.type === type && cb.value === val) cb.checked = false;
@@ -122,18 +161,26 @@ function renderJobs() {
         const isExpanded = expandedJobs[job.id] === true;
         const textToDisplay = (isLong && !isExpanded) ? job.desc.substring(0, 120) + '...' : job.desc;
 
-        // Красиво виводимо країни та сфери, навіть якщо їх кілька
         const formattedCountry = job.country ? job.country.split(',').map(s => s.trim()).join(', ') : '';
         const formattedCategory = job.category ? job.category.split(',').map(s => s.trim()).join(', ') : '';
+        const formattedAge = job.age ? job.age.split(',').map(s => s.trim()).join(', ') : '';
+        
+        const jobStatus = job.status || 'Актуальна';
+        const isInactive = jobStatus === 'Неактуальна';
 
         list.innerHTML += `
-            <div class="job-card">
+            <div class="job-card ${isInactive ? 'inactive' : ''}">
+                <button class="copy-btn" onclick="copyJob('${job.id}')" title="Скопіювати інфу"><i class="fas fa-copy"></i></button>
+                
                 <div>
+                    <div class="status-badge ${isInactive ? 'inactive' : 'active'}">${jobStatus}</div>
                     <h3>${job.title}</h3>
                     <div class="job-meta">
                         <p><i class="fas fa-map-marker-alt"></i> ${formattedCountry}</p>
                         <p><i class="fas fa-tags"></i> ${formattedCategory}</p>
                         ${job.gender ? `<p><i class="fas fa-user"></i> ${job.gender}</p>` : ''}
+                        ${formattedAge ? `<p><i class="fas fa-user-clock"></i> Вік: ${formattedAge}</p>` : ''}
+                        ${job.minors === 'Так' ? `<p style="color:#f59e0b; font-weight:bold;"><i class="fas fa-child"></i> Можна до 18 років</p>` : ''}
                     </div>
                     <div class="job-salary">${job.salary}</div>
                     
@@ -155,24 +202,40 @@ function renderJobs() {
     renderPagination();
 }
 
-window.toggleJobDescription = function(id) {
-    expandedJobs[id] = !expandedJobs[id];
-    renderJobs();
-};
+window.copyJob = function(id) {
+    const job = allJobs.find(j => j.id === id);
+    const jobStatus = job.status || 'Актуальна';
+    
+    let text = `🔥 Вакансія: ${job.title}\n`;
+    text += `📌 Статус: ${jobStatus}\n`;
+    text += `🌍 Країна: ${job.country}\n`;
+    text += `💼 Сфера: ${job.category}\n`;
+    if(job.gender) text += `🚻 Стать: ${job.gender}\n`;
+    if(job.age) text += `⏳ Вік: ${job.age}\n`;
+    if(job.minors === 'Так') text += `👶 Підходить для неповнолітніх: ТАК\n`;
+    text += `💰 Зарплата: ${job.salary}\n\n`;
+    text += `📝 Опис:\n${job.desc}\n\n`;
+    text += `🔗 Дізнатися більше на сайті: korsolutions.works`;
+
+    navigator.clipboard.writeText(text).then(() => {
+        document.getElementById('toastTitle').innerText = 'Скопійовано!';
+        document.getElementById('toastDesc').innerText = 'Всю інфу про вакансію збережено в буфер обміну.';
+        showToast();
+    });
+}
+
+window.toggleJobDescription = function(id) { expandedJobs[id] = !expandedJobs[id]; renderJobs(); };
 
 function renderPagination() {
     const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
     const pagDiv = document.getElementById('pagination');
     pagDiv.innerHTML = '';
-
     if (totalPages <= 1) return;
 
     pagDiv.innerHTML += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
-    
     for (let i = 1; i <= totalPages; i++) {
         pagDiv.innerHTML += `<button onclick="changePage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
     }
-    
     pagDiv.innerHTML += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
 }
 
@@ -186,28 +249,23 @@ window.changePage = function(page) {
 
 loadJobsFromDatabase();
 
-window.toggleAccordion = function(id) {
-    document.getElementById(id).classList.toggle('open');
-}
+window.toggleAccordion = function(id) { document.getElementById(id).classList.toggle('open'); }
+window.toggleSidebar = function() { document.getElementById('sidebar').classList.toggle('open'); }
 
-window.toggleSidebar = function() {
-    document.getElementById('sidebar').classList.toggle('open');
-}
-
-function openModal(jobTitle) {
-    document.getElementById('modalJobTitle').innerText = jobTitle;
-    document.getElementById('jobModal').style.display = 'flex';
-}
-function closeModal() {
-    document.getElementById('jobModal').style.display = 'none';
-    document.getElementById('modalTgForm').reset();
-}
+function openModal(jobTitle) { document.getElementById('modalJobTitle').innerText = jobTitle; document.getElementById('jobModal').style.display = 'flex'; }
+function closeModal() { document.getElementById('jobModal').style.display = 'none'; document.getElementById('modalTgForm').reset(); }
 window.onclick = function(event) { if (event.target == document.getElementById('jobModal')) closeModal(); }
 
 function showToast() {
     const toast = document.getElementById('toast');
     toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 4000);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => { // Скидаємо текст після зникнення
+            document.getElementById('toastTitle').innerText = 'Успішно!';
+            document.getElementById('toastDesc').innerText = 'Анкету надіслано в Telegram менеджеру.';
+        }, 500);
+    }, 3000);
 }
 
 document.getElementById('modalTgForm').addEventListener('submit', function(e) {
