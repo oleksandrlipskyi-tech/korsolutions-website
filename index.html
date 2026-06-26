@@ -4,106 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KorSolutions - Робота за кордоном</title>
-    <!-- Підключаємо сучасний шрифт та іконки -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-       <div class="lang-switcher">
-    <button onclick="setLanguage('uk')">UA</button>
-    <button onclick="setLanguage('ru')">RU</button>
-    <button onclick="setLanguage('en')">EN</button>
-        </div>
-    <!-- Шапка сайту (Hero Section) -->
-    <header class="hero">
+
+    <header class="hero mini-hero">
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <h1 class="logo-text">KorSolutions</h1>
-            <p class="hero-subtitle">Твій надійний провідник до високооплачуваної роботи в Європі</p>
-            <a href="#vacancies" class="hero-btn">Переглянути вакансії <i class="fas fa-arrow-down"></i></a>
+            <p class="hero-subtitle">Знайди свою ідеальну роботу</p>
         </div>
     </header>
 
-    <div class="container" id="vacancies">
-        <h2 class="section-title"><i class="fas fa-briefcase"></i> Актуальні вакансії</h2>
-        
-        <!-- Прокачані Фільтри -->
-        <div class="filters-wrapper">
-            <div class="filter-box">
-                <i class="fas fa-globe"></i>
-                <select id="countryFilter" onchange="renderJobs()">
-                    <option value="Всі">Всі країни</option>
-                    <option value="Німеччина">Німеччина</option>
-                    <option value="Польща">Польща</option>
-                    <option value="Чехія">Чехія</option>
-                </select>
-            </div>
-            <div class="filter-box">
-                <i class="fas fa-layer-group"></i>
-                <select id="categoryFilter" onchange="renderJobs()">
-                    <option value="Всі">Всі сфери</option>
-                    <option value="Склади">Склади та Логістика</option>
-                    <option value="Будівництво">Будівництво</option>
-                    <option value="Виробництво">Виробництво</option>
-                </select>
-            </div>
-        </div>
+    <div class="container layout">
+        <button class="mobile-filter-btn" onclick="toggleSidebar()"><i class="fas fa-filter"></i> Показати фільтри</button>
 
-        <!-- Список вакансій -->
-        <div id="jobList" class="jobs-grid"></div>
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3><i class="fas fa-sliders-h"></i> Фільтри</h3>
+                <button class="close-sidebar" onclick="toggleSidebar()">&times;</button>
+            </div>
 
-        <!-- Переваги -->
-        <section class="benefits">
-            <h2 class="section-title"><i class="fas fa-star"></i> Чому обирають нас?</h2>
-            <div class="benefits-grid">
-                <div class="benefit-card">
-                    <i class="fas fa-file-signature"></i>
-                    <h3>Легальність</h3>
-                    <p>Тільки офіційне працевлаштування та повний пакет документів.</p>
+            <div class="filter-section">
+                <div class="filter-header" onclick="toggleAccordion('countryAcc')">
+                    <span>Країна</span> <i class="fas fa-chevron-down"></i>
                 </div>
-                <div class="benefit-card">
-                    <i class="fas fa-headset"></i>
-                    <h3>Підтримка 24/7</h3>
-                    <p>Наш менеджер залишається на зв'язку з вами від виїзду до першої зарплати.</p>
+                <div class="filter-body" id="countryAcc">
+                    <div id="dynamicCountries"></div> </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-header" onclick="toggleAccordion('categoryAcc')">
+                    <span>Сфера роботи</span> <i class="fas fa-chevron-down"></i>
                 </div>
-                <div class="benefit-card">
-                    <i class="fas fa-home"></i>
-                    <h3>Перевірене житло</h3>
-                    <p>Надаємо комфортні умови проживання європейського стандарту.</p>
+                <div class="filter-body" id="categoryAcc">
+                    <div id="dynamicCategories"></div> </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-header" onclick="toggleAccordion('genderAcc')">
+                    <span>Стать</span> <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="filter-body" id="genderAcc">
+                    <label><input type="checkbox" value="Чоловіки" class="filter-cb" data-type="genders"> Чоловіки</label>
+                    <label><input type="checkbox" value="Жінки" class="filter-cb" data-type="genders"> Жінки</label>
+                    <label><input type="checkbox" value="Сімейні пари" class="filter-cb" data-type="genders"> Сімейні пари</label>
                 </div>
             </div>
-        </section>
+        </aside>
 
-        <!-- Загальна анкета кандидату -->
-        <div class="apply-form" id="general-form">
-            <h2><i class="fas fa-user-edit"></i> Не знайшли підходящу вакансію?</h2>
-            <p>Залиште свої контакти, і наш менеджер безкоштовно підбере найкращий варіант під ваші критерії.</p>
-            <form id="tgForm">
-                <input type="hidden" id="jobTitleContext" value="Загальна заявка (Підбір вакансії)">
-                <div class="input-group">
-                    <i class="fas fa-user"></i>
-                    <input type="text" id="name" placeholder="Ваше ім'я та прізвище" required>
-                </div>
-                <div class="input-group">
-                    <i class="fas fa-phone"></i>
-                    <input type="tel" id="phone" placeholder="Номер телефону (Telegram/Viber)" required>
-                </div>
-                <div class="input-group">
-                    <i class="fas fa-comment-dots"></i>
-                    <input type="text" id="interest" placeholder="Яка робота чи країна вас цікавить?" required>
-                </div>
-                <button type="submit" class="btn-submit">Надіслати анкету <i class="fas fa-paper-plane"></i></button>
-            </form>
-        </div>
+        <main class="main-content">
+            
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Пошук за назвою або ключовими словами (наприклад: Склад, Німеччина)...">
+            </div>
+
+            <div id="activeTags" class="active-tags"></div>
+
+            <div id="jobList" class="jobs-grid"></div>
+
+            <div id="pagination" class="pagination"></div>
+
+        </main>
     </div>
 
-    <!-- Модальне вікно для відгуку на КОНКРЕТНУ вакансію -->
     <div id="jobModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
             <h2 id="modalJobTitle">Відгук на вакансію</h2>
-            <p class="modal-subtitle">Залиште контакти, ми зв'яжемося для оформлення на цю позицію.</p>
+            <p class="modal-subtitle">Залиште контакти, ми зв'яжемося для оформлення.</p>
             <form id="modalTgForm">
                 <div class="input-group">
                     <i class="fas fa-user"></i>
@@ -118,13 +90,6 @@
         </div>
     </div>
 
-    <!-- Кнопка входу в Адмінку (Прихована в підвалі сайту) -->
-    <footer class="site-footer">
-        <p>&copy; 2026 KorSolutions. Всі права захищені.</p>
-        <a href="admin.html" class="admin-link"><i class="fas fa-lock"></i> Панель управління</a>
-    </footer>
-
-    <!-- Красиве кастомне сповіщення (Toast) -->
     <div id="toast" class="toast">
         <div class="toast-icon"><i class="fas fa-check-circle"></i></div>
         <div class="toast-text">
@@ -133,7 +98,11 @@
         </div>
     </div>
 
-    <!-- Підключаємо логіку сайту -->
+    <footer class="site-footer">
+        <p>&copy; 2026 KorSolutions. Всі права захищені.</p>
+        <a href="admin.html" class="admin-link"><i class="fas fa-lock"></i> Панель управління</a>
+    </footer>
+
     <script src="script.js"></script>
 </body>
 </html>
