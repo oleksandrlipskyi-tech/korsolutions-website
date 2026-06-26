@@ -4,127 +4,132 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KorSolutions - Робота за кордоном</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
-        header { background-color: #0056b3; color: white; padding: 20px; text-align: center; }
-        .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
-        .filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        select, input, button { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
-        .job-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .job-card h3 { margin: 0 0 10px 0; color: #0056b3; }
-        .apply-form { background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-top: 30px; }
-        .apply-form input { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
-        .btn { background-color: #28a745; color: white; border: none; cursor: pointer; width: 100%; font-weight: bold; }
-        .btn:hover { background-color: #218838; }
-        @media (max-width: 600px) { .filters { flex-direction: column; } }
-    </style>
+    <!-- Підключаємо сучасний шрифт та іконки -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header>
-        <h1>KorSolutions</h1>
-        <p>Надійне працевлаштування за кордоном</p>
+    <!-- Шапка сайту (Hero Section) -->
+    <header class="hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 class="logo-text">KorSolutions</h1>
+            <p class="hero-subtitle">Твій надійний провідник до високооплачуваної роботи в Європі</p>
+            <a href="#vacancies" class="hero-btn">Переглянути вакансії <i class="fas fa-arrow-down"></i></a>
+        </div>
     </header>
 
-    <div class="container">
-        <h2>Актуальні вакансії</h2>
+    <div class="container" id="vacancies">
+        <h2 class="section-title"><i class="fas fa-briefcase"></i> Актуальні вакансії</h2>
         
-        <!-- Фільтри -->
-        <div class="filters">
-            <select id="countryFilter" onchange="renderJobs()">
-                <option value="Всі">Всі країни</option>
-                <option value="Німеччина">Німеччина</option>
-                <option value="Польща">Польща</option>
-            </select>
-            <select id="categoryFilter" onchange="renderJobs()">
-                <option value="Всі">Всі сфери</option>
-                <option value="Склади">Склади</option>
-                <option value="Будівництво">Будівництво</option>
-            </select>
+        <!-- Прокачані Фільтри -->
+        <div class="filters-wrapper">
+            <div class="filter-box">
+                <i class="fas fa-globe"></i>
+                <select id="countryFilter" onchange="renderJobs()">
+                    <option value="Всі">Всі країни</option>
+                    <option value="Німеччина">Німеччина</option>
+                    <option value="Польща">Польща</option>
+                    <option value="Чехія">Чехія</option>
+                </select>
+            </div>
+            <div class="filter-box">
+                <i class="fas fa-layer-group"></i>
+                <select id="categoryFilter" onchange="renderJobs()">
+                    <option value="Всі">Всі сфери</option>
+                    <option value="Склади">Склади та Логістика</option>
+                    <option value="Будівництво">Будівництво</option>
+                    <option value="Виробництво">Виробництво</option>
+                </select>
+            </div>
         </div>
 
         <!-- Список вакансій -->
-        <div id="jobList"></div>
+        <div id="jobList" class="jobs-grid"></div>
 
-        <!-- Анкета кандидата -->
-        <div class="apply-form">
-            <h2>Залишити анкету</h2>
-            <p>Не знайшли потрібну вакансію? Залиште контакти, і ми підберемо для вас роботу.</p>
+        <!-- Переваги -->
+        <section class="benefits">
+            <h2 class="section-title"><i class="fas fa-star"></i> Чому обирають нас?</h2>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <i class="fas fa-file-signature"></i>
+                    <h3>Легальність</h3>
+                    <p>Тільки офіційне працевлаштування та повний пакет документів.</p>
+                </div>
+                <div class="benefit-card">
+                    <i class="fas fa-headset"></i>
+                    <h3>Підтримка 24/7</h3>
+                    <p>Наш менеджер залишається на зв'язку з вами від виїзду до першої зарплати.</p>
+                </div>
+                <div class="benefit-card">
+                    <i class="fas fa-home"></i>
+                    <h3>Перевірене житло</h3>
+                    <p>Надаємо комфортні умови проживання європейського стандарту.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Загальна анкета кандидату -->
+        <div class="apply-form" id="general-form">
+            <h2><i class="fas fa-user-edit"></i> Не знайшли підходящу вакансію?</h2>
+            <p>Залиште свої контакти, і наш менеджер безкоштовно підбере найкращий варіант під ваші критерії.</p>
             <form id="tgForm">
-                <input type="text" id="name" placeholder="Ваше ім'я та прізвище" required>
-                <input type="tel" id="phone" placeholder="Ваш номер телефону" required>
-                <input type="text" id="interest" placeholder="Яка робота вас цікавить?" required>
-                <button type="submit" class="btn">Надіслати анкету</button>
+                <input type="hidden" id="jobTitleContext" value="Загальна заявка (Підбір вакансії)">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="name" placeholder="Ваше ім'я та прізвище" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-phone"></i>
+                    <input type="tel" id="phone" placeholder="Номер телефону (Telegram/Viber)" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-comment-dots"></i>
+                    <input type="text" id="interest" placeholder="Яка робота чи країна вас цікавить?" required>
+                </div>
+                <button type="submit" class="btn-submit">Надіслати анкету <i class="fas fa-paper-plane"></i></button>
             </form>
         </div>
     </div>
 
-    <script>
-        // База вакансій (Ти зможеш додавати сюди свої)
-        const jobs = [
-            { title: "Працівник складу Amazon", country: "Німеччина", category: "Склади", salary: "від 1800€/міс", desc: "Пакування замовлень. Житло надається безкоштовно." },
-            { title: "Монтажник металоконструкцій", country: "Польща", category: "Будівництво", salary: "від 7000 PLN/міс", desc: "Досвід роботи обов'язковий. Робочий одяг видаємо." },
-            { title: "Оператор навантажувача (Карщик)", country: "Німеччина", category: "Склади", salary: "від 2200€/міс", desc: "Потрібні права UDT. Знання мови не вимагається." }
-        ];
+    <!-- Модальне вікно для відгуку на КОНКРЕТНУ вакансію -->
+    <div id="jobModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 id="modalJobTitle">Відгук на вакансію</h2>
+            <p class="modal-subtitle">Залиште контакти, ми зв'яжемося для оформлення на цю позицію.</p>
+            <form id="modalTgForm">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="modalName" placeholder="Ваше ім'я та прізвище" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-phone"></i>
+                    <input type="tel" id="modalPhone" placeholder="Номер телефону" required>
+                </div>
+                <button type="submit" class="btn-submit">Підтвердити відгук <i class="fas fa-check"></i></button>
+            </form>
+        </div>
+    </div>
 
-        // Відображення вакансій
-        function renderJobs() {
-            const country = document.getElementById('countryFilter').value;
-            const category = document.getElementById('categoryFilter').value;
-            const list = document.getElementById('jobList');
-            list.innerHTML = '';
+    <!-- Кнопка входу в Адмінку (Прихована в підвалі сайту) -->
+    <footer class="site-footer">
+        <p>&copy; 2026 KorSolutions. Всі права захищені.</p>
+        <a href="admin.html" class="admin-link"><i class="fas fa-lock"></i> Панель управління</a>
+    </footer>
 
-            const filteredJobs = jobs.filter(job => 
-                (country === "Всі" || job.country === country) && 
-                (category === "Всі" || job.category === category)
-            );
+    <!-- Красиве кастомне сповіщення (Toast) -->
+    <div id="toast" class="toast">
+        <div class="toast-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="toast-text">
+            <span class="toast-title">Успішно!</span>
+            <span class="toast-desc">Анкету надіслано в Telegram менеджеру.</span>
+        </div>
+    </div>
 
-            filteredJobs.forEach(job => {
-                list.innerHTML += `
-                    <div class="job-card">
-                        <h3>${job.title}</h3>
-                        <p><strong>Країна:</strong> ${job.country} | <strong>Сфера:</strong> ${job.category}</p>
-                        <p><strong>Зарплата:</strong> ${job.salary}</p>
-                        <p>${job.desc}</p>
-                    </div>
-                `;
-            });
-
-            if(filteredJobs.length === 0) list.innerHTML = '<p>На жаль, за цими фільтрами вакансій не знайдено.</p>';
-        }
-
-        renderJobs();
-
-        // Відправка в Telegram
-        document.getElementById('tgForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const interest = document.getElementById('interest').value;
-
-            // Твої дані для Telegram
-            const botToken = '8018570948:AAEP421r9xEg7R587HYdkCGJTwiV-s6zkl0';
-            const chatId = '5426420290';
-            
-            const message = `🚨 НОВА АНКЕТА З САЙТУ 🚨\n\n👤 Ім'я: ${name}\n📞 Телефон: ${phone}\n💼 Цікавить: ${interest}`;
-            const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: chatId, text: message })
-            })
-            .then(response => {
-                if(response.ok) {
-                    alert('Анкету успішно відправлено! Ми зв\'яжемося з вами найближчим часом.');
-                    document.getElementById('tgForm').reset();
-                } else {
-                    alert('Сталася помилка. Спробуйте пізніше.');
-                }
-            })
-            .catch(error => alert('Помилка мережі. Перевірте з\'єднання.'));
-        });
-    </script>
+    <!-- Підключаємо логіку сайту -->
+    <script src="script.js"></script>
 </body>
 </html>
