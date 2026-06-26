@@ -24,7 +24,7 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .filter-body input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: #3b82f6; }
 
 /* Основний контент */
-.main-content { flex-grow: 1; min-width: 0; }
+.main-content { flex-grow: 1; min-width: 0; width: 100%; }
 
 /* Пошук */
 .search-box { display: flex; align-items: center; background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
@@ -36,34 +36,60 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .tag { background: #e0f2fe; color: #0369a1; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .tag i { cursor: pointer; }
 
-/* Вакансії */
-.jobs-grid { display: flex; flex-direction: column; gap: 20px; }
-.job-card { background: white; border-radius: 12px; padding: 25px; border: 1px solid #edf2f7; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-.job-card h3 { font-size: 1.3rem; color: #0f172a; margin-bottom: 10px; }
-.job-meta { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; font-size: 0.9rem; color: #475569; }
+/* СІТКА ВАКАНСІЙ 2 НА X (Дві в ряд) */
+.jobs-grid { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); /* Рівно 2 колонки */
+    gap: 20px; 
+    width: 100%;
+}
+.job-card { 
+    background: white; 
+    border-radius: 12px; 
+    padding: 25px; 
+    border: 1px solid #edf2f7; 
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0; /* Захист від вилізання тексту */
+    word-wrap: break-word; /* Перенос довгих слів */
+}
+.job-card h3 { font-size: 1.25rem; color: #0f172a; margin-bottom: 10px; word-break: break-word; }
+.job-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; font-size: 0.85rem; color: #475569; }
 .job-meta p { display: flex; align-items: center; gap: 6px; }
 .job-meta i { color: #3b82f6; }
-.job-salary { font-size: 1.2rem; font-weight: 700; color: #10b981; margin-bottom: 10px; }
+.job-salary { font-size: 1.2rem; font-weight: 700; color: #10b981; margin-bottom: 15px; }
 
-/* Згортання тексту */
-.desc-text { color: #64748b; font-size: 0.95rem; margin-bottom: 5px; }
-.read-more-btn { color: #3b82f6; cursor: pointer; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 15px; border: none; background: none; }
+/* Текст опису (Виправлено перенос тексту) */
+.desc-wrapper {
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    color: #64748b;
+    white-space: normal; /* Змушує текст переноситися вниз */
+    word-break: break-word;
+}
+.desc-text { 
+    margin-bottom: 8px; 
+    display: block;
+}
+.read-more-btn { color: #3b82f6; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; border: none; background: none; padding: 0; }
 .read-more-btn:hover { text-decoration: underline; }
 
-.btn-apply { background: #0f172a; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; font-family: inherit; }
+.btn-apply { background: #0f172a; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; font-family: inherit; width: 100%; margin-top: auto; }
 .btn-apply:hover { background: #1e293b; }
 
-/* Пагінація */
-.pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 40px; }
-.pagination button { width: 40px; height: 40px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: 600; cursor: pointer; transition: 0.2s; }
+/* Пагінація (Красиві стрілочки та цифри) */
+.pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 40px; width: 100%; }
+.pagination button { min-width: 40px; height: 40px; padding: 0 6px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
 .pagination button:hover:not(:disabled) { background: #f1f5f9; border-color: #94a3b8; }
-.pagination button.active { background: #3b82f6; color: white; border-color: #3b82f6; }
-.pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+.pagination button.active { background: #3b82f6; color: white; border-color: #3b82f6; cursor: default; }
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; background: #f1f5f9; }
 
 /* Мобільна кнопка фільтрів */
 .mobile-filter-btn { display: none; width: 100%; background: #0f172a; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 20px; }
 
-/* Модалка, Toast, Форми (з минулого етапу) */
+/* Форми, Модалки, Тоасти */
 .input-group { position: relative; margin-bottom: 18px; }
 .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
 .input-group input { width: 100%; padding: 14px 14px 14px 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; font-family: inherit; }
@@ -74,7 +100,7 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .toast { position: fixed; bottom: -100px; right: 20px; background: white; border-left: 5px solid #10b981; padding: 15px 20px; border-radius: 8px; display: flex; align-items: center; gap: 15px; z-index: 110; transition: 0.4s; }
 .toast.show { bottom: 20px; }
 .toast-icon { color: #10b981; font-size: 1.5rem; }
-.site-footer { text-align: center; padding: 30px; background: #0f172a; color: #94a3b8; margin-top: auto; }
+.site-footer { text-align: center; padding: 30px; background: #0f172a; color: #94a3b8; margin-top: 60px; width: 100%; }
 .admin-link { color: #64748b; text-decoration: none; font-size: 0.8rem; display: block; margin-top: 10px; }
 
 /* Адаптивність */
@@ -84,4 +110,5 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
     .sidebar.open { display: block; }
     .mobile-filter-btn { display: block; }
     .close-sidebar { display: block; }
+    .jobs-grid { grid-template-columns: 1fr; } /* На мобільних картки стають по одній в ряд */
 }
