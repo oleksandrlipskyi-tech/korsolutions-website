@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KorSolutions - Панель Адміністратора</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; background-color: #f1f5f9; color: #1e293b; padding: 40px 20px; }
+        .admin-container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { font-size: 1.8rem; margin-bottom: 25px; text-align: center; color: #0f172a; }
+        h1 i { color: #3b82f6; }
+        .input-group { position: relative; margin-bottom: 18px; }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 14px 14px 14px 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; font-family: inherit; box-sizing: border-box; }
+        .input-group textarea { height: 100px; resize: vertical; }
+        .btn-action { width: 100%; background: #3b82f6; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+        .btn-action:hover { background: #2563eb; }
+        .output-box { display: none; margin-top: 30px; background: #0f172a; color: #a7f3d0; padding: 20px; border-radius: 8px; position: relative; }
+        .output-box h3 { color: white; margin-bottom: 10px; font-size: 1rem; }
+        code { font-family: 'Courier New', Courier, monospace; word-break: break-all; font-size: 0.9rem; }
+        .btn-copy { position: absolute; right: 15px; top: 15px; background: #334155; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
+        .btn-copy:hover { background: #475569; }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #64748b; text-decoration: none; font-size: 0.9rem; }
+        .back-link:hover { color: #3b82f6; }
+        #authBlock { display: block; }
+        #managerBlock { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <!-- Блок авторизації (Захист паролем) -->
+        <div id="authBlock">
+            <h1><i class="fas fa-lock"></i> Вхід в адмін-панель</h1>
+            <div class="input-group">
+                <i class="fas fa-key"></i>
+                <input type="password" id="adminPassword" placeholder="Введіть пароль адміністратора">
+            </div>
+            <button class="btn-action" onclick="checkPassword()">Увійти <i class="fas fa-sign-in-alt"></i></button>
+        </div>
+
+        <!-- Блок генератора вакансій -->
+        <div id="managerBlock">
+            <h1><i class="fas fa-tools"></i> Конструктор вакансій</h1>
+            <form id="jobGeneratorForm" onsubmit="generateCode(event)">
+                <div class="input-group">
+                    <i class="fas fa-heading"></i>
+                    <input type="text" id="jobTitle" placeholder="Назва вакансії (напр. Сортувальник одягу)" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-globe"></i>
+                    <select id="jobCountry" required>
+                        <option value="" disabled selected>Оберіть країну</option>
+                        <option value="Німеччина">Німеччина</option>
+                        <option value="Польща">Польща</option>
+                        <option value="Чехія">Чехія</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-layer-group"></i>
+                    <select id="jobCategory" required>
+                        <option value="" disabled selected>Оберіть сферу діяльності</option>
+                        <option value="Склади">Склади та Логістика</option>
+                        <option value="Будівництво">Будівництво</option>
+                        <option value="Виробництво">Виробництво</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <input type="text" id="jobSalary" placeholder="Зарплата (напр. від 1900€/міс або 230 PLN/год)" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-align-left"></i>
+                    <textarea id="jobDesc" placeholder="Короткий опис умов роботи, обов'язків та проживання..." required></textarea>
+                </div>
+                <button type="submit" class="btn-action">Згенерувати код вакансії <i class="fas fa-magic"></i></button>
+            </form>
+
+            <div id="outputBox" class="output-box">
+                <button class="btn-copy" onclick="copyCode()">Скопіювати</button>
+                <h3><i class="far fa-file-code"></i> Готовий код для вставки:</h3>
+                <code id="generatedCode"></code>
+                <p style="color: #94a3b8; font-size: 0.8rem; margin-top: 15px;"><i class="fas fa-info-circle"></i> Скопіюй цей рядок, зайди в свій <b>script.js</b> на GitHub і встав його всередину списку вакансій (масиву jobs).</p>
+            </div>
+        </div>
+
+        <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Повернутися на сайт</a>
+    </div>
+
+    <script>
+        // Твій пароль для входу в адмінку (можеш змінити тут 'admin123' на будь-який свій)
+        const SecretPassword = 'admin123';
+
+        function checkPassword() {
+            const entered = document.getElementById('adminPassword').value;
+            if (entered === SecretPassword) {
+                document.getElementById('authBlock').style.display = 'none';
+                document.getElementById('managerBlock').style.display = 'block';
+            } else {
+                alert('Невірний пароль!');
+            }
+        }
+
+        function generateCode(e) {
+            e.preventDefault();
+            const title = document.getElementById('jobTitle').value.replace(/"/g, '\\"');
+            const country = document.getElementById('jobCountry').value;
+            const category = document.getElementById('jobCategory').value;
+            const salary = document.getElementById('jobSalary').value.replace(/"/g, '\\"');
+            const desc = document.getElementById('jobDesc').value.replace(/"/g, '\\"').replace(/\n/g, ' ');
+
+            const code = `{ title: "${title}", country: "${country}", category: "${category}", salary: "${salary}", desc: "${desc}" },`;
+            
+            document.getElementById('generatedCode').innerText = code;
+            document.getElementById('outputBox').style.display = 'block';
+        }
+
+        function copyCode() {
+            const codeText = document.getElementById('generatedCode').innerText;
+            navigator.clipboard.writeText(codeText).then(() => {
+                alert('Код успішно скопійовано у буфер обміну!');
+            });
+        }
+    </script>
+</body>
+</html>
