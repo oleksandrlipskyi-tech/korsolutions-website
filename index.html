@@ -28,11 +28,25 @@
             </div>
 
             <div class="filter-section">
+                <div class="filter-header" onclick="toggleAccordion('statusAcc')">
+                    <span>Актуальність</span> <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="filter-body open" id="statusAcc">
+                    <select id="statusFilter" class="form-select" onchange="applyFilters()">
+                        <option value="Всі">Всі вакансії</option>
+                        <option value="Актуальна" selected>Тільки актуальні</option>
+                        <option value="Неактуальна">Архів (Неактуальні)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-section">
                 <div class="filter-header" onclick="toggleAccordion('countryAcc')">
                     <span>Країна</span> <i class="fas fa-chevron-down"></i>
                 </div>
-                <div class="filter-body" id="countryAcc">
-                    <div id="dynamicCountries"></div> </div>
+                <div class="filter-body open" id="countryAcc">
+                    <div id="dynamicCountries"></div>
+                </div>
             </div>
 
             <div class="filter-section">
@@ -40,7 +54,19 @@
                     <span>Сфера роботи</span> <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="filter-body" id="categoryAcc">
-                    <div id="dynamicCategories"></div> </div>
+                    <div id="dynamicCategories"></div>
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <div class="filter-header" onclick="toggleAccordion('ageAcc')">
+                    <span>Вік кандидата</span> <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="filter-body" id="ageAcc">
+                    <label><input type="checkbox" id="minorsOnlyFilter" onchange="applyFilters()"> Тільки для неповнолітніх (до 18)</label>
+                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 5px 0;">
+                    <div id="dynamicAges"></div>
+                </div>
             </div>
 
             <div class="filter-section">
@@ -53,19 +79,29 @@
                     <label><input type="checkbox" value="Сімейні пари" class="filter-cb" data-type="genders"> Сімейні пари</label>
                 </div>
             </div>
+
+            <button class="btn-reset" onclick="resetFilters()"><i class="fas fa-sync-alt"></i> Скинути всі фільтри</button>
         </aside>
 
         <main class="main-content">
             
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Пошук за назвою або ключовими словами (наприклад: Склад, Німеччина)...">
+            <div class="content-controls">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Пошук (наприклад: Склад)...">
+                </div>
+                <div class="sort-box">
+                    <i class="fas fa-sort-amount-down"></i>
+                    <select id="sortSelect" onchange="applyFilters()">
+                        <option value="date-desc">Спершу нові</option>
+                        <option value="date-asc">Спершу старі</option>
+                        <option value="name-asc">За алфавітом (А-Я)</option>
+                    </select>
+                </div>
             </div>
 
             <div id="activeTags" class="active-tags"></div>
-
             <div id="jobList" class="jobs-grid"></div>
-
             <div id="pagination" class="pagination"></div>
 
         </main>
@@ -75,7 +111,6 @@
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
             <h2 id="modalJobTitle">Відгук на вакансію</h2>
-            <p class="modal-subtitle">Залиште контакти, ми зв'яжемося для оформлення.</p>
             <form id="modalTgForm">
                 <div class="input-group">
                     <i class="fas fa-user"></i>
@@ -85,7 +120,7 @@
                     <i class="fas fa-phone"></i>
                     <input type="tel" id="modalPhone" placeholder="Номер телефону" required>
                 </div>
-                <button type="submit" class="btn-submit">Підтвердити відгук <i class="fas fa-check"></i></button>
+                <button type="submit" class="btn-submit">Підтвердити відгук</button>
             </form>
         </div>
     </div>
@@ -93,8 +128,8 @@
     <div id="toast" class="toast">
         <div class="toast-icon"><i class="fas fa-check-circle"></i></div>
         <div class="toast-text">
-            <span class="toast-title">Успішно!</span>
-            <span class="toast-desc">Анкету надіслано в Telegram менеджеру.</span>
+            <span class="toast-title" id="toastTitle">Успішно!</span>
+            <span class="toast-desc" id="toastDesc">Анкету надіслано.</span>
         </div>
     </div>
 
