@@ -6,7 +6,39 @@ const botToken = '8018570948:AAEP421r9xEg7R587HYdkCGJTwiV-s6zkl0';
 const chatId = '5426420290';
 
 let jobs = []; 
+const translations = {
+    uk: {
+        hero_title: "Робота в Європі",
+        hero_subtitle: "Знайти найкращу вакансію стало простіше",
+        btn_apply: "Відгукнутися"
+    },
+    ru: {
+        hero_title: "Работа в Европе",
+        hero_subtitle: "Найти лучшую вакансию стало проще",
+        btn_apply: "Откликнуться"
+    },
+    en: {
+        hero_title: "Work in Europe",
+        hero_subtitle: "Finding the best job is now easier",
+        btn_apply: "Apply"
+    }
+};
 
+function setLanguage(lang) {
+    localStorage.setItem('lang', lang);
+    document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        if (translations[lang][key]) {
+            element.innerText = translations[lang][key];
+        }
+    });
+}
+
+// Завантаження мови при старті
+window.onload = () => {
+    const savedLang = localStorage.getItem('lang') || 'uk';
+    setLanguage(savedLang);
+};
 // Функція завантаження даних з бази Firebase
 function loadJobsFromDatabase() {
     const list = document.getElementById('jobList');
