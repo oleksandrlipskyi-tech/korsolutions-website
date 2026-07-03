@@ -99,13 +99,23 @@
                     <i class="fas fa-search"></i>
                     <input type="text" id="searchInput" placeholder="Пошук (наприклад: Склад)...">
                 </div>
-                <div class="sort-box">
-                    <i class="fas fa-sort-amount-down"></i>
-                    <select id="sortSelect" onchange="applyFilters()">
-                        <option value="date-desc">Спершу нові</option>
-                        <option value="date-asc">Спершу старі</option>
-                        <option value="name-asc">За алфавітом (А-Я)</option>
-                    </select>
+                <div style="display: flex; gap: 15px;">
+                    <div class="sort-box">
+                        <i class="fas fa-sort-amount-down"></i>
+                        <select id="sortSelect" onchange="applyFilters()">
+                            <option value="date-desc">Спершу нові</option>
+                            <option value="date-asc">Спершу старі</option>
+                            <option value="name-asc">За алфавітом (А-Я)</option>
+                        </select>
+                    </div>
+                    <div class="sort-box">
+                        <i class="fas fa-list-ol"></i>
+                        <select id="perPageSelect" onchange="changePerPage()">
+                            <option value="6">6 на сторінці</option>
+                            <option value="12">12 на сторінці</option>
+                            <option value="24">24 на сторінці</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
