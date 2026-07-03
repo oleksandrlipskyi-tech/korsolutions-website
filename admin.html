@@ -22,6 +22,12 @@
         .input-group i { position: absolute; left: 15px; top: 16px; color: #94a3b8; }
         .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 14px 14px 14px 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; font-family: inherit; box-sizing: border-box; }
         .input-group textarea { height: 120px; resize: vertical; }
+        
+        /* Швидкі теги (Клікабельні) */
+        .quick-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; margin-top: -10px; padding-left: 5px; }
+        .quick-tag { background: #e2e8f0; color: #475569; font-size: 0.8rem; font-weight: 600; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .quick-tag:hover { background: #cbd5e1; color: #1e293b; }
+
         .btn-action { width: 100%; background: #10b981; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: 0.2s; }
         .btn-action:hover { background: #059669; }
         .job-list-item { border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
@@ -44,7 +50,7 @@
             <h1><i class="fas fa-lock"></i> Вхід в адмін-панель</h1>
             <div class="input-group">
                 <i class="fas fa-key"></i>
-                <input type="password" id="adminPassword" placeholder="Введіть пароль">
+                <input type="password" id="adminPassword" placeholder="Введіть пароль (admin123)">
             </div>
             <button class="btn-action" style="background:#3b82f6;" onclick="checkPassword()">Увійти</button>
             <a href="index.html" class="back-link">Повернутися на сайт</a>
@@ -75,37 +81,52 @@
                     </div>
 
                     <div class="input-group">
-                        <i class="fas fa-heading"></i>
-                        <input type="text" id="jobTitle" placeholder="Назва вакансії" required>
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-globe"></i>
-                        <input type="text" id="jobCountry" placeholder="Країна (напр: Німеччина, Польща)" required>
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-layer-group"></i>
-                        <input type="text" id="jobCategory" placeholder="Сфера (напр: Склади, Будівництво)" required>
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-user-clock"></i>
-                        <input type="text" id="jobAge" placeholder="Вікові групи (напр: 18-45, 45-60) - створить фільтр">
-                    </div>
-                    
-                    <div class="input-group" style="display: flex; align-items: center; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px;">
-                        <input type="checkbox" id="jobMinors" style="width: 20px; height: 20px; margin-right: 15px; cursor: pointer;">
-                        <label for="jobMinors" style="font-size: 1rem; cursor: pointer; color: #475569; font-weight: 600;">Вакансія підходить для неповнолітніх (до 18 років)</label>
+                        <i class="fas fa-user-secret" style="color: #e11d48;"></i>
+                        <input type="text" id="jobPartner" placeholder="Код партнера (напр. ID-405) - Приховано від користувачів!" style="border-color: #fda4af; background: #fff1f2;">
                     </div>
 
                     <div class="input-group">
-                        <i class="fas fa-venus-mars"></i>
-                        <select id="jobGender" required>
-                            <option value="" disabled selected>Оберіть стать кандидата</option>
-                            <option value="Чоловіки">Чоловіки</option>
-                            <option value="Жінки">Жінки</option>
-                            <option value="Сімейні пари">Сімейні пари</option>
-                            <option value="Будь-яка">Будь-яка (Не вказувати)</option>
-                        </select>
+                        <i class="fas fa-heading"></i>
+                        <input type="text" id="jobTitle" placeholder="Назва вакансії" required>
                     </div>
+
+                    <div class="input-group" style="margin-bottom: 5px;">
+                        <i class="fas fa-globe"></i>
+                        <input type="text" id="jobCountry" placeholder="Країна (через кому)" required>
+                    </div>
+                    <div id="quickCountries" class="quick-tags"></div>
+
+                    <div class="input-group">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <input type="text" id="jobAddress" placeholder="Точна адреса або місто (не обов'язково)">
+                    </div>
+
+                    <div class="input-group" style="margin-bottom: 5px;">
+                        <i class="fas fa-layer-group"></i>
+                        <input type="text" id="jobCategory" placeholder="Сфера (через кому)" required>
+                    </div>
+                    <div id="quickCategories" class="quick-tags"></div>
+
+                    <div class="input-group" style="margin-bottom: 5px;">
+                        <i class="fas fa-user-clock"></i>
+                        <input type="text" id="jobAge" placeholder="Вікові групи (напр: 18-45) - створить фільтр">
+                    </div>
+                    <div id="quickAges" class="quick-tags"></div>
+                    
+                    <div class="input-group" style="display: flex; align-items: center; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px;">
+                        <input type="checkbox" id="jobMinors" style="width: 20px; height: 20px; margin-right: 15px; cursor: pointer;">
+                        <label for="jobMinors" style="font-size: 1rem; cursor: pointer; color: #475569; font-weight: 600;">Вакансія підходить для неповнолітніх (до 18)</label>
+                    </div>
+
+                    <div class="input-group" style="padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="color: #64748b; margin-bottom: 8px; font-weight: 600;"><i class="fas fa-venus-mars"></i> Оберіть стать (можна кілька):</div>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <label><input type="checkbox" class="admin-gender-cb" value="Чоловіки" style="accent-color: #3b82f6;"> Чоловіки</label>
+                            <label><input type="checkbox" class="admin-gender-cb" value="Жінки" style="accent-color: #3b82f6;"> Жінки</label>
+                            <label><input type="checkbox" class="admin-gender-cb" value="Сімейні пари" style="accent-color: #3b82f6;"> Сімейні пари</label>
+                        </div>
+                    </div>
+
                     <div class="input-group">
                         <i class="fas fa-money-bill-wave"></i>
                         <input type="text" id="jobSalary" placeholder="Зарплата (напр. від 1900€/міс)" required>
@@ -145,15 +166,33 @@
             else { document.getElementById('tabAddBtn').classList.add('active'); }
         }
 
+        // Додавання тегу з "швидких кнопок"
+        function addQuickTag(inputId, val) {
+            const input = document.getElementById(inputId);
+            let current = input.value.split(',').map(s => s.trim()).filter(Boolean);
+            if(!current.includes(val)) {
+                current.push(val);
+                input.value = current.join(', ');
+            }
+        }
+
         function loadAdminJobs() {
             fetch(dbBase + '.json').then(res => res.json()).then(data => {
                 const list = document.getElementById('adminJobsList');
                 list.innerHTML = '';
                 if(data) {
                     allJobs = data;
-                    // Сортуємо список в адмінці, щоб нові були зверху
                     const sortedKeys = Object.keys(data).sort((a, b) => (data[b].timestamp || 0) - (data[a].timestamp || 0));
                     
+                    // Генеруємо швидкі теги для форми додавання
+                    const countries = [...new Set(Object.values(allJobs).flatMap(j => j.country ? j.country.split(',').map(s=>s.trim()) : []))].filter(Boolean);
+                    const categories = [...new Set(Object.values(allJobs).flatMap(j => j.category ? j.category.split(',').map(s=>s.trim()) : []))].filter(Boolean);
+                    const ages = [...new Set(Object.values(allJobs).flatMap(j => j.age ? j.age.split(',').map(s=>s.trim()) : []))].filter(Boolean);
+
+                    document.getElementById('quickCountries').innerHTML = countries.map(c => `<span class="quick-tag" onclick="addQuickTag('jobCountry', '${c}')">+ ${c}</span>`).join('');
+                    document.getElementById('quickCategories').innerHTML = categories.map(c => `<span class="quick-tag" onclick="addQuickTag('jobCategory', '${c}')">+ ${c}</span>`).join('');
+                    document.getElementById('quickAges').innerHTML = ages.map(c => `<span class="quick-tag" onclick="addQuickTag('jobAge', '${c}')">+ ${c}</span>`).join('');
+
                     sortedKeys.forEach(id => {
                         const job = data[id];
                         const jobStatus = job.status || 'Актуальна';
@@ -164,6 +203,7 @@
                                     <div class="status-pill ${badgeClass}">${jobStatus}</div>
                                     <h3>${job.title}</h3>
                                     <p>${job.country} | ${job.category}</p>
+                                    ${job.partner ? `<p style="color:#e11d48; font-size:0.8rem; margin-top:5px;"><i class="fas fa-user-secret"></i> Код: ${job.partner}</p>` : ''}
                                 </div>
                                 <div class="job-actions">
                                     <button class="btn-edit" onclick="editJob('${id}')"><i class="fas fa-pen"></i></button>
@@ -175,6 +215,9 @@
                 } else {
                     allJobs = {};
                     list.innerHTML = '<p style="text-align:center; color:#64748b;">Немає доданих вакансій.</p>';
+                    document.getElementById('quickCountries').innerHTML = '';
+                    document.getElementById('quickCategories').innerHTML = '';
+                    document.getElementById('quickAges').innerHTML = '';
                 }
             });
         }
@@ -185,17 +228,20 @@
             btn.innerText = 'Збереження...';
             btn.disabled = true;
 
+            const selectedGenders = Array.from(document.querySelectorAll('.admin-gender-cb:checked')).map(cb => cb.value).join(', ');
+
             const jobData = {
                 status: document.getElementById('jobStatus').value,
+                partner: document.getElementById('jobPartner').value, // Секретний код
                 title: document.getElementById('jobTitle').value,
                 country: document.getElementById('jobCountry').value,
+                address: document.getElementById('jobAddress').value, // Геолокація
                 category: document.getElementById('jobCategory').value,
                 age: document.getElementById('jobAge').value,
                 minors: document.getElementById('jobMinors').checked ? 'Так' : 'Ні',
-                gender: document.getElementById('jobGender').value === 'Будь-яка' ? '' : document.getElementById('jobGender').value,
+                gender: selectedGenders, // Кілька статей
                 salary: document.getElementById('jobSalary').value,
                 desc: document.getElementById('jobDesc').value,
-                // Важливо: зберігаємо час створення для сортування (якщо редагуємо - залишаємо старий час)
                 timestamp: (editingJobId && allJobs[editingJobId].timestamp) ? allJobs[editingJobId].timestamp : Date.now()
             };
 
@@ -217,12 +263,19 @@
             document.getElementById('cancelEditBtn').style.display = 'block';
 
             document.getElementById('jobStatus').value = job.status || 'Актуальна';
+            document.getElementById('jobPartner').value = job.partner || '';
             document.getElementById('jobTitle').value = job.title;
             document.getElementById('jobCountry').value = job.country;
+            document.getElementById('jobAddress').value = job.address || '';
             document.getElementById('jobCategory').value = job.category;
             document.getElementById('jobAge').value = job.age || '';
             document.getElementById('jobMinors').checked = job.minors === 'Так';
-            document.getElementById('jobGender').value = job.gender ? job.gender : 'Будь-яка';
+            
+            const genders = job.gender ? job.gender.split(',').map(s=>s.trim()) : [];
+            document.querySelectorAll('.admin-gender-cb').forEach(cb => {
+                cb.checked = genders.includes(cb.value);
+            });
+
             document.getElementById('jobSalary').value = job.salary;
             document.getElementById('jobDesc').value = job.desc;
 
@@ -232,6 +285,7 @@
         function cancelEdit() {
             editingJobId = null;
             document.getElementById('jobForm').reset();
+            document.querySelectorAll('.admin-gender-cb').forEach(cb => cb.checked = false);
             document.getElementById('jobStatus').value = 'Актуальна';
             document.getElementById('formTitle').innerText = 'Створення нової вакансії';
             document.getElementById('tabAddBtn').innerHTML = '<i class="fas fa-plus"></i> Додати вакансію';
