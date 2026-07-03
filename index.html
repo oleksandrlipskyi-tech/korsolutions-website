@@ -22,9 +22,18 @@
         <button class="mobile-filter-btn" onclick="toggleSidebar()"><i class="fas fa-filter"></i> Показати фільтри</button>
 
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
+            <div class="sidebar-header" ondblclick="toggleSecretFilter()" title="Подвійний клік приховує таємницю..." style="cursor: pointer;">
                 <h3><i class="fas fa-sliders-h"></i> Фільтри</h3>
                 <button class="close-sidebar" onclick="toggleSidebar()">&times;</button>
+            </div>
+
+            <div class="filter-section" id="secretPartnerDiv" style="display: none; background: #fff1f2; padding: 10px; border-radius: 8px; border: 1px dashed #f43f5e;">
+                <div class="filter-header">
+                    <span style="color: #e11d48; font-weight: 700;"><i class="fas fa-user-secret"></i> Код партнера</span>
+                </div>
+                <div class="filter-body open">
+                    <input type="text" id="partnerFilterInput" class="form-select" placeholder="Введіть код..." oninput="applyFilters()">
+                </div>
             </div>
 
             <div class="filter-section">
