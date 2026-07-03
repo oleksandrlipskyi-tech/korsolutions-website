@@ -12,7 +12,7 @@ let searchQuery = "";
 let expandedJobs = {};
 
 function loadJobsFromDatabase() {
-    document.getElementById('jobList').innerHTML = '<p style="text-align:center; grid-column: 1/-1; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Завантаження актуальних вакансій...</p>';
+    document.getElementById('jobList').innerHTML = '<p style="text-align:center; grid-column: 1/-1; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Завантаження...</p>';
     fetch(databaseUrl)
     .then(response => response.json())
     .then(data => {
@@ -24,32 +24,19 @@ function loadJobsFromDatabase() {
         buildDynamicCheckboxes();
         applyFilters(); 
     })
-    .catch(() => {
-        document.getElementById('jobList').innerHTML = '<p style="color:red; text-align:center; grid-column: 1/-1; padding: 40px;">Помилка завантаження бази даних.</p>';
-    });
 }
 
 function buildDynamicCheckboxes() {
     const rawCountries = allJobs.flatMap(j => j.country ? j.country.split(',').map(s => s.trim()) : []);
     const countries = [...new Set(rawCountries)].filter(Boolean);
-
     const rawCategories = allJobs.flatMap(j => j.category ? j.category.split(',').map(s => s.trim()) : []);
     const categories = [...new Set(rawCategories)].filter(Boolean);
-
     const rawAges = allJobs.flatMap(j => j.age ? j.age.split(',').map(s => s.trim()) : []);
     const ages = [...new Set(rawAges)].filter(Boolean);
 
-    document.getElementById('dynamicCountries').innerHTML = countries.map(c => 
-        `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="countries"> ${c}</label>`
-    ).join('');
-
-    document.getElementById('dynamicCategories').innerHTML = categories.map(c => 
-        `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="categories"> ${c}</label>`
-    ).join('');
-
-    document.getElementById('dynamicAges').innerHTML = ages.map(c => 
-        `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="ages"> ${c}</label>`
-    ).join('');
+    document.getElementById('dynamicCountries').innerHTML = countries.map(c => `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="countries"> ${c}</label>`).join('');
+    document.getElementById('dynamicCategories').innerHTML = categories.map(c => `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="categories"> ${c}</label>`).join('');
+    document.getElementById('dynamicAges').innerHTML = ages.map(c => `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="ages"> ${c}</label>`).join('');
 
     document.querySelectorAll('.filter-cb').forEach(cb => {
         cb.addEventListener('change', (e) => {
@@ -62,7 +49,6 @@ function buildDynamicCheckboxes() {
     });
 }
 
-// Функція відкриття секретного фільтру
 window.toggleSecretFilter = function() {
     const el = document.getElementById('secretPartnerDiv');
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
@@ -81,7 +67,6 @@ window.resetFilters = function() {
     document.getElementById('statusFilter').value = "Актуальна";
     document.getElementById('sortSelect').value = "date-desc";
     document.getElementById('minorsOnlyFilter').checked = false;
-    
     document.querySelectorAll('.filter-cb').forEach(cb => cb.checked = false);
     applyFilters();
 }
@@ -90,44 +75,31 @@ window.applyFilters = function() {
     const statusReq = document.getElementById('statusFilter').value;
     const minorsOnly = document.getElementById('minorsOnlyFilter').checked;
     const sortMode = document.getElementById('sortSelect').value;
-    
-    // Секретний фільтр партнера
     const partnerInput = document.getElementById('partnerFilterInput');
     const partnerReq = partnerInput ? partnerInput.value.toLowerCase().trim() : '';
 
     filteredJobs = allJobs.filter(job => {
         const matchSearch = job.title.toLowerCase().includes(searchQuery) || job.desc.toLowerCase().includes(searchQuery);
-        
         const jobStatus = job.status || 'Актуальна';
         const matchStatus = (statusReq === 'Всі') || (jobStatus === statusReq);
         const matchMinors = !minorsOnly || job.minors === 'Так';
-
-        // Секретний збіг
         const jobPartner = (job.partner || '').toLowerCase();
         const matchPartner = partnerReq === '' || jobPartner.includes(partnerReq);
-
         const jobCountries = job.country ? job.country.split(',').map(s => s.trim()) : [];
         const matchCountry = activeFilters.countries.length === 0 || jobCountries.some(c => activeFilters.countries.includes(c));
-        
         const jobCategories = job.category ? job.category.split(',').map(s => s.trim()) : [];
         const matchCategory = activeFilters.categories.length === 0 || jobCategories.some(c => activeFilters.categories.includes(c));
-        
         const jobAges = job.age ? job.age.split(',').map(s => s.trim()) : [];
         const matchAgeGroup = activeFilters.ages.length === 0 || jobAges.some(c => activeFilters.ages.includes(c));
-
         const jobGenders = job.gender ? job.gender.split(',').map(s => s.trim()) : [];
         const matchGender = activeFilters.genders.length === 0 || jobGenders.some(g => activeFilters.genders.includes(g));
         
         return matchSearch && matchStatus && matchMinors && matchCountry && matchCategory && matchGender && matchAgeGroup && matchPartner;
     });
 
-    if (sortMode === 'date-desc') {
-        filteredJobs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-    } else if (sortMode === 'date-asc') {
-        filteredJobs.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-    } else if (sortMode === 'name-asc') {
-        filteredJobs.sort((a, b) => a.title.localeCompare(b.title));
-    }
+    if (sortMode === 'date-desc') filteredJobs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    else if (sortMode === 'date-asc') filteredJobs.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    else if (sortMode === 'name-asc') filteredJobs.sort((a, b) => a.title.localeCompare(b.title));
 
     currentPage = 1;
     renderActiveTags();
@@ -146,9 +118,7 @@ function renderActiveTags() {
 
 window.removeFilter = function(type, val) {
     activeFilters[type] = activeFilters[type].filter(item => item !== val);
-    document.querySelectorAll('.filter-cb').forEach(cb => {
-        if (cb.dataset.type === type && cb.value === val) cb.checked = false;
-    });
+    document.querySelectorAll('.filter-cb').forEach(cb => { if (cb.dataset.type === type && cb.value === val) cb.checked = false; });
     applyFilters();
 }
 
@@ -167,24 +137,28 @@ function renderJobs() {
     }
 
     jobsToShow.forEach(job => {
-        const isLong = job.desc.length > 120;
+        // Створюємо тимчасовий елемент, щоб дістати ТІЛЬКИ текст з HTML (для короткого опису)
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = job.desc;
+        const plainText = tempDiv.innerText || tempDiv.textContent || '';
+        
+        const isLong = plainText.length > 150;
         const isExpanded = expandedJobs[job.id] === true;
-        const textToDisplay = (isLong && !isExpanded) ? job.desc.substring(0, 120) + '...' : job.desc;
+        
+        // Якщо розгорнуто — показуємо красивий HTML. Якщо згорнуто — показуємо обрізаний простий текст
+        const htmlToDisplay = (isExpanded || !isLong) ? job.desc : plainText.substring(0, 150) + '...';
 
         const formattedCountry = job.country ? job.country.split(',').map(s => s.trim()).join(', ') : '';
         const formattedCategory = job.category ? job.category.split(',').map(s => s.trim()).join(', ') : '';
         const formattedAge = job.age ? job.age.split(',').map(s => s.trim()).join(', ') : '';
         const formattedGender = job.gender ? job.gender.split(',').map(s => s.trim()).join(', ') : '';
-        
-        const jobStatus = job.status || 'Актуальна';
-        const isInactive = jobStatus === 'Неактуальна';
+        const isInactive = (job.status || 'Актуальна') === 'Неактуальна';
 
         list.innerHTML += `
             <div class="job-card ${isInactive ? 'inactive' : ''}">
                 <button class="copy-btn" onclick="copyJob('${job.id}')" title="Скопіювати інфу"><i class="fas fa-copy"></i></button>
-                
                 <div>
-                    <div class="status-badge ${isInactive ? 'inactive' : 'active'}">${jobStatus}</div>
+                    <div class="status-badge ${isInactive ? 'inactive' : 'active'}">${job.status || 'Актуальна'}</div>
                     <h3>${job.title}</h3>
                     <div class="job-meta">
                         <p><i class="fas fa-globe"></i> ${formattedCountry}</p>
@@ -196,42 +170,38 @@ function renderJobs() {
                     </div>
                     <div class="job-salary">${job.salary}</div>
                     
-                    <div class="desc-wrapper">
-                        <span class="desc-text">${textToDisplay}</span>
-                        ${isLong ? `
-                            <button class="read-more-btn" onclick="toggleJobDescription('${job.id}')">
-                                ${isExpanded ? 'Згорнути <i class="fas fa-angle-up"></i>' : 'Розгорнути <i class="fas fa-angle-down"></i>'}
-                            </button>
-                        ` : ''}
+                    <div class="desc-wrapper rich-text-box">
+                        ${htmlToDisplay}
                     </div>
+                    ${isLong ? `
+                        <button class="read-more-btn" style="margin-bottom:20px;" onclick="toggleJobDescription('${job.id}')">
+                            ${isExpanded ? 'Згорнути <i class="fas fa-angle-up"></i>' : 'Розгорнути <i class="fas fa-angle-down"></i>'}
+                        </button>
+                    ` : ''}
                 </div>
-
                 <button class="btn-apply" onclick="openModal('${job.title}')">Відгукнутися</button>
             </div>
         `;
     });
-
     renderPagination();
 }
 
-// Оновлене копіювання з секретним кодом партнера
 window.copyJob = function(id) {
     const job = allJobs.find(j => j.id === id);
-    const jobStatus = job.status || 'Актуальна';
     
-    let text = `🔥 Вакансія: ${job.title}\n`;
-    text += `📌 Статус: ${jobStatus}\n`;
-    text += `🌍 Країна: ${job.country}\n`;
+    // Дістаємо чистий текст (з переносами рядків) для копіювання в месенджери
+    const temp = document.createElement('div');
+    temp.innerHTML = job.desc;
+    const plainDesc = temp.innerText;
+
+    let text = `🔥 Вакансія: ${job.title}\n📌 Статус: ${job.status || 'Актуальна'}\n🌍 Країна: ${job.country}\n`;
     if(job.address) text += `📍 Адреса: ${job.address}\n`;
     text += `💼 Сфера: ${job.category}\n`;
     if(job.gender) text += `🚻 Стать: ${job.gender}\n`;
     if(job.age) text += `⏳ Вік: ${job.age}\n`;
     if(job.minors === 'Так') text += `👶 Підходить для неповнолітніх: ТАК\n`;
-    text += `💰 Зарплата: ${job.salary}\n\n`;
-    text += `📝 Опис:\n${job.desc}\n\n`;
-    text += `🔗 Дізнатися більше: korsolutions.works`;
+    text += `💰 Зарплата: ${job.salary}\n\n📝 Опис:\n${plainDesc}\n\n🔗 Дізнатися більше: korsolutions.works`;
 
-    // Якщо секретне меню відкрито — копіюємо також код партнера!
     const secretDiv = document.getElementById('secretPartnerDiv');
     if(secretDiv && secretDiv.style.display === 'block' && job.partner) {
         text += `\n\n🕵️ Внутрішній код: ${job.partner}`;
@@ -239,7 +209,7 @@ window.copyJob = function(id) {
 
     navigator.clipboard.writeText(text).then(() => {
         document.getElementById('toastTitle').innerText = 'Скопійовано!';
-        document.getElementById('toastDesc').innerText = 'Всю інфу про вакансію збережено в буфер обміну.';
+        document.getElementById('toastDesc').innerText = 'Всю інфу збережено в буфер обміну.';
         showToast();
     });
 }
@@ -279,13 +249,7 @@ window.onclick = function(event) { if (event.target == document.getElementById('
 function showToast() {
     const toast = document.getElementById('toast');
     toast.classList.add('show');
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => { 
-            document.getElementById('toastTitle').innerText = 'Успішно!';
-            document.getElementById('toastDesc').innerText = 'Анкету надіслано в Telegram менеджеру.';
-        }, 500);
-    }, 3000);
+    setTimeout(() => { toast.classList.remove('show'); }, 3000);
 }
 
 document.getElementById('modalTgForm').addEventListener('submit', function(e) {
