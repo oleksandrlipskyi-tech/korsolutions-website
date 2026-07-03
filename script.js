@@ -22,7 +22,7 @@ function loadJobsFromDatabase() {
             allJobs = [];
         }
         buildDynamicCheckboxes();
-        applyFilters(); // Одразу застосовуємо фільтри і сортування
+        applyFilters(); 
     })
     .catch(() => {
         document.getElementById('jobList').innerHTML = '<p style="color:red; text-align:center; grid-column: 1/-1; padding: 40px;">Помилка завантаження бази даних.</p>';
@@ -62,16 +62,22 @@ function buildDynamicCheckboxes() {
     });
 }
 
+// Функція відкриття секретного фільтру
+window.toggleSecretFilter = function() {
+    const el = document.getElementById('secretPartnerDiv');
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+};
+
 document.getElementById('searchInput').addEventListener('input', (e) => {
     searchQuery = e.target.value.toLowerCase();
     applyFilters();
 });
 
-// Кнопка скидання фільтрів
 window.resetFilters = function() {
     activeFilters = { countries: [], categories: [], genders: [], ages: [] };
     searchQuery = "";
     document.getElementById('searchInput').value = "";
+    if(document.getElementById('partnerFilterInput')) document.getElementById('partnerFilterInput').value = "";
     document.getElementById('statusFilter').value = "Актуальна";
     document.getElementById('sortSelect').value = "date-desc";
     document.getElementById('minorsOnlyFilter').checked = false;
@@ -84,18 +90,22 @@ window.applyFilters = function() {
     const statusReq = document.getElementById('statusFilter').value;
     const minorsOnly = document.getElementById('minorsOnlyFilter').checked;
     const sortMode = document.getElementById('sortSelect').value;
+    
+    // Секретний фільтр партнера
+    const partnerInput = document.getElementById('partnerFilterInput');
+    const partnerReq = partnerInput ? partnerInput.value.toLowerCase().trim() : '';
 
     filteredJobs = allJobs.filter(job => {
         const matchSearch = job.title.toLowerCase().includes(searchQuery) || job.desc.toLowerCase().includes(searchQuery);
         
-        // Статус
         const jobStatus = job.status || 'Актуальна';
         const matchStatus = (statusReq === 'Всі') || (jobStatus === statusReq);
-
-        // Неповнолітні
         const matchMinors = !minorsOnly || job.minors === 'Так';
 
-        // Інші масиви (через кому)
+        // Секретний збіг
+        const jobPartner = (job.partner || '').toLowerCase();
+        const matchPartner = partnerReq === '' || jobPartner.includes(partnerReq);
+
         const jobCountries = job.country ? job.country.split(',').map(s => s.trim()) : [];
         const matchCountry = activeFilters.countries.length === 0 || jobCountries.some(c => activeFilters.countries.includes(c));
         
@@ -105,12 +115,12 @@ window.applyFilters = function() {
         const jobAges = job.age ? job.age.split(',').map(s => s.trim()) : [];
         const matchAgeGroup = activeFilters.ages.length === 0 || jobAges.some(c => activeFilters.ages.includes(c));
 
-        const matchGender = activeFilters.genders.length === 0 || (job.gender && activeFilters.genders.includes(job.gender));
+        const jobGenders = job.gender ? job.gender.split(',').map(s => s.trim()) : [];
+        const matchGender = activeFilters.genders.length === 0 || jobGenders.some(g => activeFilters.genders.includes(g));
         
-        return matchSearch && matchStatus && matchMinors && matchCountry && matchCategory && matchGender && matchAgeGroup;
+        return matchSearch && matchStatus && matchMinors && matchCountry && matchCategory && matchGender && matchAgeGroup && matchPartner;
     });
 
-    // СОРТУВАННЯ
     if (sortMode === 'date-desc') {
         filteredJobs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     } else if (sortMode === 'date-asc') {
@@ -164,6 +174,7 @@ function renderJobs() {
         const formattedCountry = job.country ? job.country.split(',').map(s => s.trim()).join(', ') : '';
         const formattedCategory = job.category ? job.category.split(',').map(s => s.trim()).join(', ') : '';
         const formattedAge = job.age ? job.age.split(',').map(s => s.trim()).join(', ') : '';
+        const formattedGender = job.gender ? job.gender.split(',').map(s => s.trim()).join(', ') : '';
         
         const jobStatus = job.status || 'Актуальна';
         const isInactive = jobStatus === 'Неактуальна';
@@ -176,9 +187,10 @@ function renderJobs() {
                     <div class="status-badge ${isInactive ? 'inactive' : 'active'}">${jobStatus}</div>
                     <h3>${job.title}</h3>
                     <div class="job-meta">
-                        <p><i class="fas fa-map-marker-alt"></i> ${formattedCountry}</p>
+                        <p><i class="fas fa-globe"></i> ${formattedCountry}</p>
+                        ${job.address ? `<p><i class="fas fa-map-marker-alt"></i> ${job.address}</p>` : ''}
                         <p><i class="fas fa-tags"></i> ${formattedCategory}</p>
-                        ${job.gender ? `<p><i class="fas fa-user"></i> ${job.gender}</p>` : ''}
+                        ${formattedGender ? `<p><i class="fas fa-user"></i> ${formattedGender}</p>` : ''}
                         ${formattedAge ? `<p><i class="fas fa-user-clock"></i> Вік: ${formattedAge}</p>` : ''}
                         ${job.minors === 'Так' ? `<p style="color:#f59e0b; font-weight:bold;"><i class="fas fa-child"></i> Можна до 18 років</p>` : ''}
                     </div>
@@ -202,6 +214,7 @@ function renderJobs() {
     renderPagination();
 }
 
+// Оновлене копіювання з секретним кодом партнера
 window.copyJob = function(id) {
     const job = allJobs.find(j => j.id === id);
     const jobStatus = job.status || 'Актуальна';
@@ -209,13 +222,20 @@ window.copyJob = function(id) {
     let text = `🔥 Вакансія: ${job.title}\n`;
     text += `📌 Статус: ${jobStatus}\n`;
     text += `🌍 Країна: ${job.country}\n`;
+    if(job.address) text += `📍 Адреса: ${job.address}\n`;
     text += `💼 Сфера: ${job.category}\n`;
     if(job.gender) text += `🚻 Стать: ${job.gender}\n`;
     if(job.age) text += `⏳ Вік: ${job.age}\n`;
     if(job.minors === 'Так') text += `👶 Підходить для неповнолітніх: ТАК\n`;
     text += `💰 Зарплата: ${job.salary}\n\n`;
     text += `📝 Опис:\n${job.desc}\n\n`;
-    text += `🔗 Дізнатися більше на сайті: korsolutions.works`;
+    text += `🔗 Дізнатися більше: korsolutions.works`;
+
+    // Якщо секретне меню відкрито — копіюємо також код партнера!
+    const secretDiv = document.getElementById('secretPartnerDiv');
+    if(secretDiv && secretDiv.style.display === 'block' && job.partner) {
+        text += `\n\n🕵️ Внутрішній код: ${job.partner}`;
+    }
 
     navigator.clipboard.writeText(text).then(() => {
         document.getElementById('toastTitle').innerText = 'Скопійовано!';
@@ -261,7 +281,7 @@ function showToast() {
     toast.classList.add('show');
     setTimeout(() => {
         toast.classList.remove('show');
-        setTimeout(() => { // Скидаємо текст після зникнення
+        setTimeout(() => { 
             document.getElementById('toastTitle').innerText = 'Успішно!';
             document.getElementById('toastDesc').innerText = 'Анкету надіслано в Telegram менеджеру.';
         }, 500);
