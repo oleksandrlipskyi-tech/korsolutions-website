@@ -137,16 +137,16 @@ function renderJobs() {
     }
 
     jobsToShow.forEach(job => {
-        // Створюємо тимчасовий елемент, щоб дістати ТІЛЬКИ текст з HTML (для короткого опису)
+        // Рахуємо довжину тексту для розуміння, чи потрібна кнопка "Розгорнути"
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = job.desc;
         const plainText = tempDiv.innerText || tempDiv.textContent || '';
         
-        const isLong = plainText.length > 150;
+        const isLong = plainText.length > 200; // Якщо символів більше 200 - згортаємо
         const isExpanded = expandedJobs[job.id] === true;
         
-        // Якщо розгорнуто — показуємо красивий HTML. Якщо згорнуто — показуємо обрізаний простий текст
-        const htmlToDisplay = (isExpanded || !isLong) ? job.desc : plainText.substring(0, 150) + '...';
+        // Визначаємо клас для контейнера
+        const wrapperClass = (isLong && !isExpanded) ? "desc-wrapper rich-text-box collapsed" : "desc-wrapper rich-text-box expanded";
 
         const formattedCountry = job.country ? job.country.split(',').map(s => s.trim()).join(', ') : '';
         const formattedCategory = job.category ? job.category.split(',').map(s => s.trim()).join(', ') : '';
@@ -170,11 +170,12 @@ function renderJobs() {
                     </div>
                     <div class="job-salary">${job.salary}</div>
                     
-                    <div class="desc-wrapper rich-text-box">
-                        ${htmlToDisplay}
+                    <div class="${wrapperClass}">
+                        ${job.desc}
                     </div>
+                    
                     ${isLong ? `
-                        <button class="read-more-btn" style="margin-bottom:20px;" onclick="toggleJobDescription('${job.id}')">
+                        <button class="read-more-btn" onclick="toggleJobDescription('${job.id}')">
                             ${isExpanded ? 'Згорнути <i class="fas fa-angle-up"></i>' : 'Розгорнути <i class="fas fa-angle-down"></i>'}
                         </button>
                     ` : ''}
@@ -188,8 +189,6 @@ function renderJobs() {
 
 window.copyJob = function(id) {
     const job = allJobs.find(j => j.id === id);
-    
-    // Дістаємо чистий текст (з переносами рядків) для копіювання в месенджери
     const temp = document.createElement('div');
     temp.innerHTML = job.desc;
     const plainDesc = temp.innerText;
