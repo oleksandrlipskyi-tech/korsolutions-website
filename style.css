@@ -21,7 +21,6 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .filter-body input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: #3b82f6; }
 .form-select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; font-family: inherit; font-size: 0.95rem; }
 
-/* Скинути фільтри */
 .btn-reset { width: 100%; background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 10px; font-family: inherit; }
 .btn-reset:hover { background: #e2e8f0; color: #1e293b; }
 
@@ -40,16 +39,15 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .tag { background: #e0f2fe; color: #0369a1; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .tag i { cursor: pointer; }
 
-/* Картки вакансій */
-.jobs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%; }
+/* ВИПРАВЛЕНО: Додано align-items: flex-start, щоб картки не розтягувалися! */
+.jobs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%; align-items: flex-start; }
+
 .job-card { background: white; border-radius: 12px; padding: 25px; border: 1px solid #edf2f7; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; min-width: 0; word-wrap: break-word; position: relative; }
 .job-card.inactive { opacity: 0.7; filter: grayscale(50%); }
 
-/* Значок копіювання */
 .copy-btn { position: absolute; top: 20px; right: 20px; background: #f1f5f9; color: #64748b; border: none; width: 35px; height: 35px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
 .copy-btn:hover { background: #3b82f6; color: white; }
 
-/* Бейдж статусу */
 .status-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-bottom: 15px; }
 .status-badge.active { background: #dcfce7; color: #166534; }
 .status-badge.inactive { background: #fee2e2; color: #991b1b; }
@@ -60,10 +58,27 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .job-meta i { color: #3b82f6; }
 .job-salary { font-size: 1.2rem; font-weight: 700; color: #10b981; margin-bottom: 15px; }
 
-.desc-wrapper { margin-bottom: 20px; font-size: 0.9rem; color: #64748b; white-space: normal; word-break: break-word; }
-.desc-text { margin-bottom: 8px; display: block; }
-.read-more-btn { color: #3b82f6; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; border: none; background: none; padding: 0; }
+
+/* ВИПРАВЛЕНО: СТИЛІ ДЛЯ ЗГОРТАННЯ ТЕКСТУ З ГРАДІЄНТОМ */
+.desc-wrapper { font-size: 0.9rem; color: #64748b; word-break: break-word; }
+.desc-wrapper.collapsed {
+    max-height: 160px; /* Приблизно 6 рядків тексту */
+    overflow: hidden;
+    position: relative;
+}
+.desc-wrapper.collapsed::after {
+    content: "";
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60px; /* Висота градієнту */
+    background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
+    pointer-events: none; /* Щоб кліки проходили крізь нього */
+}
+.desc-wrapper.expanded { max-height: none; }
+
+.read-more-btn { color: #3b82f6; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; border: none; background: none; padding: 0; margin-top: 10px; margin-bottom: 20px; }
 .read-more-btn:hover { text-decoration: underline; }
+
 
 .btn-apply { background: #0f172a; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit; width: 100%; margin-top: auto; }
 .btn-apply:hover { background: #1e293b; }
@@ -89,6 +104,13 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .site-footer { text-align: center; padding: 30px; background: #0f172a; color: #94a3b8; margin-top: 60px; width: 100%; }
 .admin-link { color: #64748b; text-decoration: none; font-size: 0.8rem; display: block; margin-top: 10px; }
 
+/* Стилі для редактора Quill на сайті */
+.rich-text-box { line-height: 1.6; }
+.rich-text-box p { margin-bottom: 10px; }
+.rich-text-box strong { color: #0f172a; font-weight: 700; }
+.rich-text-box ul, .rich-text-box ol { margin-bottom: 10px; padding-left: 20px; }
+.rich-text-box li { margin-bottom: 4px; }
+
 @media (max-width: 768px) {
     .layout { flex-direction: column; }
     .sidebar { display: none; width: 100%; position: fixed; top: 0; left: 0; height: 100%; z-index: 200; border-radius: 0; overflow-y: auto; }
@@ -98,8 +120,3 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
     .jobs-grid { grid-template-columns: 1fr; }
     .content-controls { flex-direction: column; }
 }
-.rich-text-box { font-size: 0.95rem; line-height: 1.6; color: #475569; }
-.rich-text-box p { margin-bottom: 10px; }
-.rich-text-box strong { color: #0f172a; font-weight: 700; }
-.rich-text-box ul, .rich-text-box ol { margin-bottom: 10px; padding-left: 20px; }
-.rich-text-box li { margin-bottom: 4px; }
