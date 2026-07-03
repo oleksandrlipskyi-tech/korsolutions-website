@@ -5,7 +5,7 @@ const chatId = '5426420290';
 let allJobs = [];
 let filteredJobs = [];
 let currentPage = 1;
-const jobsPerPage = 6; 
+let jobsPerPage = 6; // Тепер це змінна
 
 let activeFilters = { countries: [], categories: [], genders: [], ages: [] };
 let searchQuery = "";
@@ -59,6 +59,12 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
     applyFilters();
 });
 
+window.changePerPage = function() {
+    jobsPerPage = parseInt(document.getElementById('perPageSelect').value);
+    currentPage = 1;
+    renderJobs();
+};
+
 window.resetFilters = function() {
     activeFilters = { countries: [], categories: [], genders: [], ages: [] };
     searchQuery = "";
@@ -78,9 +84,19 @@ window.applyFilters = function() {
     const partnerInput = document.getElementById('partnerFilterInput');
     const partnerReq = partnerInput ? partnerInput.value.toLowerCase().trim() : '';
 
+    // Отримуємо сьогоднішню дату в форматі YYYY-MM-DD для перевірки терміну дії
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
     filteredJobs = allJobs.filter(job => {
         const matchSearch = job.title.toLowerCase().includes(searchQuery) || job.desc.toLowerCase().includes(searchQuery);
-        const jobStatus = job.status || 'Актуальна';
+        
+        // Логіка Авто-Архіву за датою
+        let jobStatus = job.status || 'Актуальна';
+        if (job.expireDate && job.expireDate < today) {
+            jobStatus = 'Неактуальна'; // Якщо дата пройшла, вона стає неактуальною
+        }
+
         const matchStatus = (statusReq === 'Всі') || (jobStatus === statusReq);
         const matchMinors = !minorsOnly || job.minors === 'Так';
         const jobPartner = (job.partner || '').toLowerCase();
@@ -136,29 +152,33 @@ function renderJobs() {
         return;
     }
 
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
     jobsToShow.forEach(job => {
-        // Рахуємо довжину тексту для розуміння, чи потрібна кнопка "Розгорнути"
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = job.desc;
         const plainText = tempDiv.innerText || tempDiv.textContent || '';
         
-        const isLong = plainText.length > 200; // Якщо символів більше 200 - згортаємо
+        const isLong = plainText.length > 200; 
         const isExpanded = expandedJobs[job.id] === true;
-        
-        // Визначаємо клас для контейнера
         const wrapperClass = (isLong && !isExpanded) ? "desc-wrapper rich-text-box collapsed" : "desc-wrapper rich-text-box expanded";
 
         const formattedCountry = job.country ? job.country.split(',').map(s => s.trim()).join(', ') : '';
         const formattedCategory = job.category ? job.category.split(',').map(s => s.trim()).join(', ') : '';
         const formattedAge = job.age ? job.age.split(',').map(s => s.trim()).join(', ') : '';
         const formattedGender = job.gender ? job.gender.split(',').map(s => s.trim()).join(', ') : '';
-        const isInactive = (job.status || 'Актуальна') === 'Неактуальна';
+        
+        let jobStatus = job.status || 'Актуальна';
+        if (job.expireDate && job.expireDate < today) jobStatus = 'Неактуальна';
+        const isInactive = jobStatus === 'Неактуальна';
 
+        // Додано ID до картки (id="job-card-${job.id}") для прокрутки
         list.innerHTML += `
-            <div class="job-card ${isInactive ? 'inactive' : ''}">
+            <div class="job-card ${isInactive ? 'inactive' : ''}" id="job-card-${job.id}">
                 <button class="copy-btn" onclick="copyJob('${job.id}')" title="Скопіювати інфу"><i class="fas fa-copy"></i></button>
                 <div>
-                    <div class="status-badge ${isInactive ? 'inactive' : 'active'}">${job.status || 'Актуальна'}</div>
+                    <div class="status-badge ${isInactive ? 'inactive' : 'active'}">${jobStatus}</div>
                     <h3>${job.title}</h3>
                     <div class="job-meta">
                         <p><i class="fas fa-globe"></i> ${formattedCountry}</p>
@@ -166,7 +186,8 @@ function renderJobs() {
                         <p><i class="fas fa-tags"></i> ${formattedCategory}</p>
                         ${formattedGender ? `<p><i class="fas fa-user"></i> ${formattedGender}</p>` : ''}
                         ${formattedAge ? `<p><i class="fas fa-user-clock"></i> Вік: ${formattedAge}</p>` : ''}
-                        ${job.minors === 'Так' ? `<p style="color:#f59e0b; font-weight:bold;"><i class="fas fa-child"></i> Можна до 18 років</p>` : ''}
+                        ${job.expireDate ? `<p style="color:#ef4444;"><i class="fas fa-hourglass-end"></i> До ${job.expireDate}</p>` : ''}
+                        ${job.minors === 'Так' ? `<p style="color:#f59e0b; font-weight:bold;"><i class="fas fa-child"></i> Можна до 18</p>` : ''}
                     </div>
                     <div class="job-salary">${job.salary}</div>
                     
@@ -213,7 +234,23 @@ window.copyJob = function(id) {
     });
 }
 
-window.toggleJobDescription = function(id) { expandedJobs[id] = !expandedJobs[id]; renderJobs(); };
+// Оновлене згортання з плавним поверненням на місце
+window.toggleJobDescription = function(id) { 
+    const wasExpanded = expandedJobs[id];
+    expandedJobs[id] = !expandedJobs[id]; 
+    renderJobs(); 
+
+    if (wasExpanded) {
+        // Якщо ми щойно згорнули вакансію, знаходимо її на екрані і скролимо до неї
+        const card = document.getElementById(`job-card-${id}`);
+        if (card) {
+            const headerOffset = 40; 
+            const elementPosition = card.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+        }
+    }
+};
 
 function renderPagination() {
     const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
