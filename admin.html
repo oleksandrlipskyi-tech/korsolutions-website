@@ -125,15 +125,31 @@
                         <input type="text" id="jobTitle" placeholder="Назва вакансії" required>
                     </div>
 
-                    <div class="input-group" style="margin-bottom: 5px;">
+           <div class="input-group" style="margin-bottom: 5px;">
                         <i class="fas fa-globe"></i>
-                        <input type="text" id="jobCountry" placeholder="Країна (через кому)" required>
+                        <input type="text" id="jobCountry" placeholder="Країна" required>
                     </div>
                     <div id="quickCountries" class="quick-tags"></div>
 
+                    <div class="input-group" style="margin-bottom: 5px;">
+                        <i class="fas fa-city"></i>
+                        <input type="text" id="jobBaseCity" placeholder="Головне місто для фільтру (напр. Варшава)">
+                    </div>
+                    <div id="quickCities" class="quick-tags"></div>
+
+                    <div class="input-group">
+                        <i class="fas fa-route"></i>
+                        <select id="jobRadius" required>
+                            <option value="0">Знаходиться точно в цьому місті (0 км)</option>
+                            <option value="10">Знаходиться в радіусі 10 км</option>
+                            <option value="30">Знаходиться в радіусі 30 км</option>
+                            <option value="50">Знаходиться в радіусі 50 км</option>
+                        </select>
+                    </div>
+
                     <div class="input-group">
                         <i class="fas fa-map-marker-alt"></i>
-                        <input type="text" id="jobAddress" placeholder="Точна адреса (місто, вулиця)">
+                        <input type="text" id="jobAddress" placeholder="Точна адреса (видима для кандидата)">
                     </div>
 
                     <div class="input-group" style="margin-bottom: 5px;">
@@ -225,6 +241,7 @@
                     adminJobsArray = Object.entries(data).map(([id, job]) => ({ id, ...job }));
                     adminJobsArray.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                     
+                    const cities = [...new Set(adminJobsArray.flatMap(j => j.baseCity ? j.baseCity.split(',').map(s=>s.trim()) : []))].filter(Boolean);
                     const countries = [...new Set(adminJobsArray.flatMap(j => j.country ? j.country.split(',').map(s=>s.trim()) : []))].filter(Boolean);
                     const categories = [...new Set(adminJobsArray.flatMap(j => j.category ? j.category.split(',').map(s=>s.trim()) : []))].filter(Boolean);
                     const ages = [...new Set(adminJobsArray.flatMap(j => j.age ? j.age.split(',').map(s=>s.trim()) : []))].filter(Boolean);
@@ -232,6 +249,7 @@
                     document.getElementById('quickCountries').innerHTML = countries.map(c => `<span class="quick-tag" onclick="addQuickTag('jobCountry', '${c}')">+ ${c}</span>`).join('');
                     document.getElementById('quickCategories').innerHTML = categories.map(c => `<span class="quick-tag" onclick="addQuickTag('jobCategory', '${c}')">+ ${c}</span>`).join('');
                     document.getElementById('quickAges').innerHTML = ages.map(c => `<span class="quick-tag" onclick="addQuickTag('jobAge', '${c}')">+ ${c}</span>`).join('');
+                    document.getElementById('quickCities').innerHTML = cities.map(c => `<span class="quick-tag" onclick="addQuickTag('jobBaseCity', '${c}')">+ ${c}</span>`).join('');
                 } else {
                     allJobs = {};
                     adminJobsArray = [];
@@ -329,6 +347,8 @@
             const selectedGenders = Array.from(document.querySelectorAll('.admin-gender-cb:checked')).map(cb => cb.value).join(', ');
 
             const jobData = {
+                baseCity: document.getElementById('jobBaseCity').value, // НОВЕ
+                radius: document.getElementById('jobRadius').value,     // НОВЕ
                 status: document.getElementById('jobStatus').value,
                 expireDate: document.getElementById('jobExpireDate').value, // НОВЕ: Дата закінчення
                 partner: document.getElementById('jobPartner').value, 
@@ -373,12 +393,16 @@
         }
 
         function fillFormFromJob(job) {
+            document.getElementById('jobCountry').value = job.country || '';
+            document.getElementById('jobBaseCity').value = job.baseCity || ''; // НОВЕ
+            document.getElementById('jobRadius').value = job.radius || '0';    // НОВЕ
+            document.getElementById('jobAddress').value = job.address || '';
             document.getElementById('jobStatus').value = job.status || 'Актуальна';
             document.getElementById('jobExpireDate').value = job.expireDate || '';
             document.getElementById('jobPartner').value = job.partner || '';
             document.getElementById('jobTitle').value = job.title;
-            document.getElementById('jobCountry').value = job.country;
-            document.getElementById('jobAddress').value = job.address || '';
+       
+            
             document.getElementById('jobCategory').value = job.category;
             document.getElementById('jobAge').value = job.age || '';
             document.getElementById('jobMinors').checked = job.minors === 'Так';
