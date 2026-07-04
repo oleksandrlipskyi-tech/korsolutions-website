@@ -39,34 +39,32 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .tag { background: #e0f2fe; color: #0369a1; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .tag i { cursor: pointer; }
 
-/* ВИПРАВЛЕНО: Додано align-items: flex-start, щоб картки не розтягувалися! */
-/* Суцільний список вакансій без відступів (в одну колонку) */
-.jobs-grid { display: flex; flex-direction: column; width: 100%; }
+
+/* РОБИМО МАКЕТ PINTEREST (Без пустих дірок між картками) */
+.jobs-grid { 
+    column-count: 2; /* Ділимо на 2 незалежні колонки */
+    column-gap: 20px; /* Відстань між колонками */
+    width: 100%; 
+}
 
 .job-card { 
     background: white; 
+    border-radius: 12px; 
     padding: 25px; 
     border: 1px solid #edf2f7; 
-    margin-bottom: -1px; /* Склеюємо картки докупи */
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
     display: flex; 
     flex-direction: column; 
     justify-content: space-between; 
     min-width: 0; 
     word-wrap: break-word; 
     position: relative; 
-    transition: 0.2s;
+    break-inside: avoid; /* Забороняє картці розриватися на дві колонки */
+    margin-bottom: 20px; /* Вертикальний відступ підтягує нижню картку ВПРИТУЛ до верхньої */
 }
+/* ======================================================== */
 
-/* Заокруглюємо кути тільки для найпершої і найостаннішої картки */
-.job-card:first-child { border-top-left-radius: 12px; border-top-right-radius: 12px; }
-.job-card:last-child { border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
 
-/* Ефект виділення при наведенні мишкою */
-.job-card:hover { 
-    background: #f8fafc; 
-    z-index: 1; /* Виводимо на передній план, щоб було видно всю рамку */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-}
 .job-card.inactive { opacity: 0.7; filter: grayscale(50%); }
 
 .copy-btn { position: absolute; top: 20px; right: 20px; background: #f1f5f9; color: #64748b; border: none; width: 35px; height: 35px; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
@@ -82,27 +80,20 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .job-meta i { color: #3b82f6; }
 .job-salary { font-size: 1.2rem; font-weight: 700; color: #10b981; margin-bottom: 15px; }
 
-
-/* ВИПРАВЛЕНО: СТИЛІ ДЛЯ ЗГОРТАННЯ ТЕКСТУ З ГРАДІЄНТОМ */
 .desc-wrapper { font-size: 0.9rem; color: #64748b; word-break: break-word; }
-.desc-wrapper.collapsed {
-    max-height: 160px; /* Приблизно 6 рядків тексту */
-    overflow: hidden;
-    position: relative;
-}
+.desc-wrapper.collapsed { max-height: 160px; overflow: hidden; position: relative; }
 .desc-wrapper.collapsed::after {
     content: "";
     position: absolute;
     bottom: 0; left: 0; right: 0;
-    height: 60px; /* Висота градієнту */
+    height: 60px;
     background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
-    pointer-events: none; /* Щоб кліки проходили крізь нього */
+    pointer-events: none;
 }
 .desc-wrapper.expanded { max-height: none; }
 
 .read-more-btn { color: #3b82f6; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; border: none; background: none; padding: 0; margin-top: 10px; margin-bottom: 20px; }
 .read-more-btn:hover { text-decoration: underline; }
-
 
 .btn-apply { background: #0f172a; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit; width: 100%; margin-top: auto; }
 .btn-apply:hover { background: #1e293b; }
@@ -128,7 +119,6 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .site-footer { text-align: center; padding: 30px; background: #0f172a; color: #94a3b8; margin-top: 60px; width: 100%; }
 .admin-link { color: #64748b; text-decoration: none; font-size: 0.8rem; display: block; margin-top: 10px; }
 
-/* Стилі для редактора Quill на сайті */
 .rich-text-box { line-height: 1.6; }
 .rich-text-box p { margin-bottom: 10px; }
 .rich-text-box strong { color: #0f172a; font-weight: 700; }
@@ -141,6 +131,6 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
     .sidebar.open { display: block; }
     .mobile-filter-btn { display: block; }
     .close-sidebar { display: block; }
-    .jobs-grid { grid-template-columns: 1fr; }
+    .jobs-grid { column-count: 1; } /* На телефонах буде 1 суцільна колонка */
     .content-controls { flex-direction: column; }
 }
