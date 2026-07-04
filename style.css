@@ -1,5 +1,5 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: #1e293b; line-height: 1.6; }
+body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: #1e293b; line-height: 1.6; overflow-x: hidden; /* Забороняємо горизонтальний скрол на всьому сайті */ }
 .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
 .hero.mini-hero { background: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200') center/cover; height: 30vh; min-height: 250px; position: relative; display: flex; align-items: center; justify-content: center; text-align: center; color: white; }
@@ -24,26 +24,28 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .btn-reset { width: 100%; background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 10px; font-family: inherit; }
 .btn-reset:hover { background: #e2e8f0; color: #1e293b; }
 
-.main-content { flex-grow: 1; min-width: 0; width: 100%; }
+.main-content { flex-grow: 1; min-width: 0; width: 100%; max-width: 100%; }
 
 /* Пошук і сортування */
-.content-controls { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-.search-box { flex-grow: 1; display: flex; align-items: center; background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-.search-box i { color: #94a3b8; font-size: 1.2rem; }
-.search-box input { border: none; outline: none; width: 100%; margin-left: 15px; font-size: 1rem; font-family: inherit; }
-.sort-box { background: white; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px; }
-.sort-box i { color: #94a3b8; }
-.sort-box select { border: none; outline: none; font-family: inherit; font-size: 1rem; color: #1e293b; cursor: pointer; background: transparent; padding: 15px 0; }
+.content-controls { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; width: 100%; max-width: 100%; }
+.search-box { flex-grow: 1; display: flex; align-items: center; background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 100%; box-sizing: border-box; }
+.search-box i { color: #94a3b8; font-size: 1.2rem; flex-shrink: 0; }
+/* Додано min-width: 0, щоб поле не вилазило за екран */
+.search-box input { border: none; outline: none; width: 100%; min-width: 0; margin-left: 15px; font-size: 1rem; font-family: inherit; background: transparent; }
+
+.sort-box { background: white; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px; max-width: 100%; box-sizing: border-box; }
+.sort-box i { color: #94a3b8; flex-shrink: 0; }
+.sort-box select { border: none; outline: none; font-family: inherit; font-size: 1rem; color: #1e293b; cursor: pointer; background: transparent; padding: 15px 0; width: 100%; }
 
 .active-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
 .tag { background: #e0f2fe; color: #0369a1; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .tag i { cursor: pointer; }
 
 
-/* РОБИМО МАКЕТ PINTEREST (Без пустих дірок між картками) */
+/* МАКЕТ PINTEREST (Працює тільки на ПК) */
 .jobs-grid { 
-    column-count: 2; /* Ділимо на 2 незалежні колонки */
-    column-gap: 20px; /* Відстань між колонками */
+    column-count: 2; 
+    column-gap: 20px; 
     width: 100%; 
 }
 
@@ -59,11 +61,9 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
     min-width: 0; 
     word-wrap: break-word; 
     position: relative; 
-    break-inside: avoid; /* Забороняє картці розриватися на дві колонки */
-    margin-bottom: 20px; /* Вертикальний відступ підтягує нижню картку ВПРИТУЛ до верхньої */
+    break-inside: avoid; 
+    margin-bottom: 20px; 
 }
-/* ======================================================== */
-
 
 .job-card.inactive { opacity: 0.7; filter: grayscale(50%); }
 
@@ -98,7 +98,7 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .btn-apply { background: #0f172a; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit; width: 100%; margin-top: auto; }
 .btn-apply:hover { background: #1e293b; }
 
-.pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 40px; width: 100%; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 40px; width: 100%; flex-wrap: wrap; }
 .pagination button { min-width: 40px; height: 40px; padding: 0 6px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
 .pagination button:hover:not(:disabled) { background: #f1f5f9; border-color: #94a3b8; }
 .pagination button.active { background: #3b82f6; color: white; border-color: #3b82f6; cursor: default; }
@@ -110,10 +110,10 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
 .input-group input { width: 100%; padding: 14px 14px 14px 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; font-family: inherit; }
 .btn-submit { width: 100%; background: #3b82f6; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; font-family: inherit; }
-.modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.6); align-items: center; justify-content: center; }
-.modal-content { background: white; padding: 35px; border-radius: 16px; width: 100%; max-width: 450px; position: relative; }
+.modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.6); align-items: center; justify-content: center; padding: 15px; }
+.modal-content { background: white; padding: 35px; border-radius: 16px; width: 100%; max-width: 450px; position: relative; box-sizing: border-box; }
 .close-modal { position: absolute; right: 20px; top: 15px; font-size: 1.8rem; cursor: pointer; color: #94a3b8; }
-.toast { position: fixed; bottom: -100px; right: 20px; background: white; border-left: 5px solid #10b981; padding: 15px 20px; border-radius: 8px; display: flex; align-items: center; gap: 15px; z-index: 110; transition: 0.4s; }
+.toast { position: fixed; bottom: -100px; right: 20px; background: white; border-left: 5px solid #10b981; padding: 15px 20px; border-radius: 8px; display: flex; align-items: center; gap: 15px; z-index: 110; transition: 0.4s; max-width: calc(100% - 40px); }
 .toast.show { bottom: 20px; }
 .toast-icon { color: #10b981; font-size: 1.5rem; }
 .site-footer { text-align: center; padding: 30px; background: #0f172a; color: #94a3b8; margin-top: 60px; width: 100%; }
@@ -125,12 +125,26 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .rich-text-box ul, .rich-text-box ol { margin-bottom: 10px; padding-left: 20px; }
 .rich-text-box li { margin-bottom: 4px; }
 
+
+/* =========================================
+   ВИПРАВЛЕНА МОБІЛЬНА ВЕРСІЯ (ДЛЯ ТЕЛЕФОНІВ)
+========================================= */
 @media (max-width: 768px) {
     .layout { flex-direction: column; }
-    .sidebar { display: none; width: 100%; position: fixed; top: 0; left: 0; height: 100%; z-index: 200; border-radius: 0; overflow-y: auto; }
+    
+    .sidebar { display: none; width: 100%; position: fixed; top: 0; left: 0; height: 100%; z-index: 200; border-radius: 0; overflow-y: auto; padding-bottom: 80px; }
     .sidebar.open { display: block; }
     .mobile-filter-btn { display: block; }
     .close-sidebar { display: block; }
-    .jobs-grid { column-count: 1; } /* На телефонах буде 1 суцільна колонка */
-    .content-controls { flex-direction: column; }
+    
+    /* 1 КОЛОНКА ДЛЯ КАРТОК */
+    .jobs-grid { column-count: 1; column-gap: 0; }
+    .job-card { margin-bottom: 15px; }
+
+    /* Жорстко фіксуємо ширину меню пошуку і сортування */
+    .content-controls { flex-direction: column; gap: 15px; width: 100%; max-width: 100%; }
+    .content-controls > div[style] { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 100%; }
+    
+    .search-box, .sort-box { width: 100%; max-width: 100%; box-sizing: border-box; }
+    .sort-box { justify-content: space-between; }
 }
