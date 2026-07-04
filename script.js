@@ -5,7 +5,7 @@ const chatId = '5426420290';
 let allJobs = [];
 let filteredJobs = [];
 let currentPage = 1;
-let jobsPerPage = 6; // Тепер це змінна
+let jobsPerPage = 6; 
 
 let activeFilters = { countries: [], categories: [], genders: [], ages: [] };
 let searchQuery = "";
@@ -44,9 +44,38 @@ function buildDynamicCheckboxes() {
             const val = e.target.value;
             if (e.target.checked) activeFilters[type].push(val);
             else activeFilters[type] = activeFilters[type].filter(item => item !== val);
+            
+            // Якщо змінили країну, оновлюємо список міст
+            if(type === 'countries') updateCityDropdown();
+            
             applyFilters();
         });
     });
+
+    updateCityDropdown(); // Формуємо список міст при старті
+}
+
+// Функція оновлення випадаючого списку міст
+function updateCityDropdown() {
+    const citySelect = document.getElementById('cityFilter');
+    let availableCities = [];
+    
+    allJobs.forEach(job => {
+        const jobCountries = job.country ? job.country.split(',').map(s => s.trim()) : [];
+        const isCountryMatch = activeFilters.countries.length === 0 || jobCountries.some(c => activeFilters.countries.includes(c));
+        if(isCountryMatch && job.baseCity) {
+            job.baseCity.split(',').forEach(c => availableCities.push(c.trim()));
+        }
+    });
+
+    const uniqueCities = [...new Set(availableCities)].sort();
+    const currentSelection = citySelect.value;
+    
+    citySelect.innerHTML = '<option value="Всі">Всі міста</option>' + 
+        uniqueCities.map(city => `<option value="${city}">${city}</option>`).join('');
+        
+    if (uniqueCities.includes(currentSelection)) citySelect.value = currentSelection;
+    else citySelect.value = "Всі";
 }
 
 window.toggleSecretFilter = function() {
@@ -72,8 +101,14 @@ window.resetFilters = function() {
     if(document.getElementById('partnerFilterInput')) document.getElementById('partnerFilterInput').value = "";
     document.getElementById('statusFilter').value = "Актуальна";
     document.getElementById('sortSelect').value = "date-desc";
+    
+    document.getElementById('cityFilter').value = "Всі"; 
+    document.getElementById('radiusFilter').value = "Будь-який"; 
+    
     document.getElementById('minorsOnlyFilter').checked = false;
     document.querySelectorAll('.filter-cb').forEach(cb => cb.checked = false);
+    
+    updateCityDropdown();
     applyFilters();
 }
 
@@ -81,36 +116,51 @@ window.applyFilters = function() {
     const statusReq = document.getElementById('statusFilter').value;
     const minorsOnly = document.getElementById('minorsOnlyFilter').checked;
     const sortMode = document.getElementById('sortSelect').value;
+    
+    const cityReq = document.getElementById('cityFilter').value;
+    const radiusReq = document.getElementById('radiusFilter').value;
+
     const partnerInput = document.getElementById('partnerFilterInput');
     const partnerReq = partnerInput ? partnerInput.value.toLowerCase().trim() : '';
 
-    // Отримуємо сьогоднішню дату в форматі YYYY-MM-DD для перевірки терміну дії
     const d = new Date();
     const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
     filteredJobs = allJobs.filter(job => {
         const matchSearch = job.title.toLowerCase().includes(searchQuery) || job.desc.toLowerCase().includes(searchQuery);
         
-        // Логіка Авто-Архіву за датою
         let jobStatus = job.status || 'Актуальна';
-        if (job.expireDate && job.expireDate < today) {
-            jobStatus = 'Неактуальна'; // Якщо дата пройшла, вона стає неактуальною
-        }
+        if (job.expireDate && job.expireDate < today) jobStatus = 'Неактуальна';
 
         const matchStatus = (statusReq === 'Всі') || (jobStatus === statusReq);
         const matchMinors = !minorsOnly || job.minors === 'Так';
         const jobPartner = (job.partner || '').toLowerCase();
         const matchPartner = partnerReq === '' || jobPartner.includes(partnerReq);
+        
         const jobCountries = job.country ? job.country.split(',').map(s => s.trim()) : [];
         const matchCountry = activeFilters.countries.length === 0 || jobCountries.some(c => activeFilters.countries.includes(c));
+        
         const jobCategories = job.category ? job.category.split(',').map(s => s.trim()) : [];
         const matchCategory = activeFilters.categories.length === 0 || jobCategories.some(c => activeFilters.categories.includes(c));
+        
         const jobAges = job.age ? job.age.split(',').map(s => s.trim()) : [];
         const matchAgeGroup = activeFilters.ages.length === 0 || jobAges.some(c => activeFilters.ages.includes(c));
+        
         const jobGenders = job.gender ? job.gender.split(',').map(s => s.trim()) : [];
         const matchGender = activeFilters.genders.length === 0 || jobGenders.some(g => activeFilters.genders.includes(g));
+
+        // Логіка Міста та Радіусу
+        const jobCity = job.baseCity ? job.baseCity.trim() : '';
+        const matchCity = (cityReq === 'Всі') || (jobCity === cityReq);
         
-        return matchSearch && matchStatus && matchMinors && matchCountry && matchCategory && matchGender && matchAgeGroup && matchPartner;
+        let matchRadius = true;
+        if (radiusReq !== 'Будь-який' && cityReq !== 'Всі') {
+            const jobRad = parseInt(job.radius || '0');
+            const searchRad = parseInt(radiusReq);
+            matchRadius = jobRad <= searchRad; 
+        }
+        
+        return matchSearch && matchStatus && matchMinors && matchCountry && matchCategory && matchGender && matchAgeGroup && matchPartner && matchCity && matchRadius;
     });
 
     if (sortMode === 'date-desc') filteredJobs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
@@ -135,6 +185,7 @@ function renderActiveTags() {
 window.removeFilter = function(type, val) {
     activeFilters[type] = activeFilters[type].filter(item => item !== val);
     document.querySelectorAll('.filter-cb').forEach(cb => { if (cb.dataset.type === type && cb.value === val) cb.checked = false; });
+    if(type === 'countries') updateCityDropdown();
     applyFilters();
 }
 
@@ -173,7 +224,6 @@ function renderJobs() {
         if (job.expireDate && job.expireDate < today) jobStatus = 'Неактуальна';
         const isInactive = jobStatus === 'Неактуальна';
 
-        // Додано ID до картки (id="job-card-${job.id}") для прокрутки
         list.innerHTML += `
             <div class="job-card ${isInactive ? 'inactive' : ''}" id="job-card-${job.id}">
                 <button class="copy-btn" onclick="copyJob('${job.id}')" title="Скопіювати інфу"><i class="fas fa-copy"></i></button>
@@ -234,14 +284,12 @@ window.copyJob = function(id) {
     });
 }
 
-// Оновлене згортання з плавним поверненням на місце
 window.toggleJobDescription = function(id) { 
     const wasExpanded = expandedJobs[id];
     expandedJobs[id] = !expandedJobs[id]; 
     renderJobs(); 
 
     if (wasExpanded) {
-        // Якщо ми щойно згорнули вакансію, знаходимо її на екрані і скролимо до неї
         const card = document.getElementById(`job-card-${id}`);
         if (card) {
             const headerOffset = 40; 
