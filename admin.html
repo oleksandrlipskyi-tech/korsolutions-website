@@ -12,7 +12,7 @@
     
     <style>
         body { font-family: 'Montserrat', sans-serif; background-color: #f1f5f9; color: #1e293b; padding: 20px; margin: 0; }
-        .admin-container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .admin-container { max-width: 950px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         h1 { font-size: 1.8rem; margin-bottom: 25px; text-align: center; color: #0f172a; }
         h1 i { color: #3b82f6; }
         #authBlock { display: block; max-width: 400px; margin: 50px auto; }
@@ -38,11 +38,12 @@
         .job-list-item:last-child { border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; margin-bottom: 15px; }
         .job-list-item:hover { background: #f8fafc; z-index: 1; position: relative; }
         
-        .job-info h3 { margin: 0 0 5px 0; color: #0f172a; font-size: 1.1rem; }
+        .job-info { flex-grow: 1; }
+        .job-info h3 { margin: 0 0 5px 0; color: #0f172a; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
         .job-info p { margin: 0; color: #64748b; font-size: 0.9rem; }
         .job-actions { display: flex; gap: 8px; }
         .btn-edit { background: #3b82f6; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        .btn-clone { background: #f59e0b; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .btn-clone { background: #3b82f6; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; }
         .btn-delete { background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; }
         .btn-cancel { background: #94a3b8; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; display: none; }
         .back-link { display: block; text-align: center; margin-top: 20px; color: #64748b; text-decoration: none; font-size: 0.9rem; }
@@ -56,6 +57,22 @@
         .admin-pagination button { min-width: 40px; height: 40px; padding: 0 6px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .admin-pagination button:hover:not(:disabled) { background: #f1f5f9; }
         .admin-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Швидкі фільтри */
+        .quick-filters { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .qf-btn { background: white; border: 1px solid #cbd5e1; color: #475569; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .qf-btn:hover { background: #f1f5f9; }
+        .qf-btn.active { background: #0f172a; color: white; border-color: #0f172a; }
+
+        /* Масові дії */
+        .bulk-actions { display: flex; gap: 15px; align-items: center; background: #f8fafc; padding: 12px 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; flex-wrap: wrap; }
+        .bulk-actions input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #3b82f6; }
+        .btn-bulk { padding: 8px 15px; border-radius: 6px; border: none; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; transition: 0.2s; }
+        .btn-bulk-archive { background: #f59e0b; } .btn-bulk-archive:hover { background: #d97706; }
+        .btn-bulk-delete { background: #ef4444; } .btn-bulk-delete:hover { background: #dc2626; }
+
+        .analytics-stats { font-size: 0.85rem; color: #64748b; margin-top: 8px; display: flex; gap: 15px; font-weight: 600; }
+        .analytics-stats i { color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -80,7 +97,14 @@
             </div>
 
             <div id="tab-list" class="tab-content active">
-                <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                
+                <div class="quick-filters">
+                    <button class="qf-btn active" onclick="setAdminFilter('all', this)">Всі (<span id="cntAll">0</span>)</button>
+                    <button class="qf-btn" onclick="setAdminFilter('active', this)">Актуальні (<span id="cntActive">0</span>)</button>
+                    <button class="qf-btn" onclick="setAdminFilter('archive', this)">Архівні (<span id="cntArchive">0</span>)</button>
+                </div>
+
+                <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
                     <div class="input-group" style="flex-grow: 1; margin-bottom: 0;">
                         <i class="fas fa-search"></i>
                         <input type="text" id="adminSearch" placeholder="Шукати за назвою, країною або кодом..." oninput="applyAdminFilters()">
@@ -92,6 +116,17 @@
                             <option value="20">20 на сторінці</option>
                             <option value="50">50 на сторінці</option>
                         </select>
+                    </div>
+                </div>
+
+                <div class="bulk-actions">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="selectAllCb" onclick="toggleSelectAll(this)">
+                        <label for="selectAllCb" style="font-weight: 600; cursor: pointer; color: #334155;">Вибрати всі на сторінці</label>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-left: auto; flex-wrap: wrap;">
+                        <button class="btn-bulk btn-bulk-archive" onclick="bulkAction('archive')"><i class="fas fa-archive"></i> В архів</button>
+                        <button class="btn-bulk btn-bulk-delete" onclick="bulkAction('delete')"><i class="fas fa-trash"></i> Видалити</button>
                     </div>
                 </div>
 
@@ -185,14 +220,15 @@
                         <i class="fas fa-money-bill-wave"></i>
                         <input type="text" id="jobSalary" placeholder="Зарплата (напр. від 1900€/міс)" required>
                     </div>
+
                     <div class="input-group">
                         <i class="fas fa-image"></i>
                         <input type="url" id="jobImage" placeholder="Посилання на головне фото (URL) - необов'язково">
                     </div>
                     
                     <div style="margin-bottom: 20px;">
-                        <div style="color: #64748b; font-weight: 600; margin-bottom: 5px; padding-left: 5px;">Опис вакансії:</div>
-                        <div id="editor-container" style="height: 300px; background: white;"></div>
+                        <div style="color: #64748b; font-weight: 600; margin-bottom: 5px; padding-left: 5px;">Опис вакансії (Можна вставляти фото/відео!):</div>
+                        <div id="editor-container" style="height: 350px; background: white;"></div>
                     </div>
                     
                     <button type="submit" id="submitBtn" class="btn-action">Зберегти вакансію <i class="fas fa-save"></i></button>
@@ -212,10 +248,11 @@
         let filteredAdminJobs = [];
         let adminCurrentPage = 1;
         let editingJobId = null; 
+        let currentFilter = 'all';
 
         var quill = new Quill('#editor-container', {
             theme: 'snow',
-            placeholder: 'Вставте готовий текст з Telegram сюди...',
+            placeholder: 'Опишіть вакансію, додайте фотографії або відео...',
             modules: { toolbar: [ ['bold', 'italic', 'underline', 'link'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['image', 'video'], ['clean'] ] }
         });
 
@@ -261,17 +298,46 @@
                     allJobs = {};
                     adminJobsArray = [];
                 }
+                updateFilterCounts();
                 applyAdminFilters();
             });
         }
 
+        function setAdminFilter(filterType, btnElement) {
+            currentFilter = filterType;
+            document.querySelectorAll('.qf-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            applyAdminFilters();
+        }
+
+        function getActualStatus(job) {
+            const d = new Date();
+            const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            let status = job.status || 'Актуальна';
+            if (job.expireDate && job.expireDate < today) status = 'Неактуальна';
+            return status;
+        }
+
+        function updateFilterCounts() {
+            document.getElementById('cntAll').innerText = adminJobsArray.length;
+            document.getElementById('cntActive').innerText = adminJobsArray.filter(j => getActualStatus(j) === 'Актуальна').length;
+            document.getElementById('cntArchive').innerText = adminJobsArray.filter(j => getActualStatus(j) !== 'Актуальна').length;
+        }
+
         function applyAdminFilters() {
             const query = document.getElementById('adminSearch').value.toLowerCase();
-            filteredAdminJobs = adminJobsArray.filter(job => 
-                job.title.toLowerCase().includes(query) || 
-                (job.partner && job.partner.toLowerCase().includes(query)) ||
-                (job.country && job.country.toLowerCase().includes(query))
-            );
+            document.getElementById('selectAllCb').checked = false; // скидаємо чекбокс масових дій
+
+            filteredAdminJobs = adminJobsArray.filter(job => {
+                const matchSearch = job.title.toLowerCase().includes(query) || (job.partner && job.partner.toLowerCase().includes(query)) || (job.country && job.country.toLowerCase().includes(query));
+                
+                const status = getActualStatus(job);
+                let matchStatus = true;
+                if (currentFilter === 'active') matchStatus = status === 'Актуальна';
+                if (currentFilter === 'archive') matchStatus = status !== 'Актуальна';
+
+                return matchSearch && matchStatus;
+            });
             adminCurrentPage = 1;
             renderAdminJobs();
         }
@@ -291,25 +357,28 @@
                 return;
             }
 
-            const d = new Date();
-            const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-
             jobsToShow.forEach(job => {
-                let jobStatus = job.status || 'Актуальна';
-                if (job.expireDate && job.expireDate < today) {
-                    jobStatus = 'Термін вийшов (Архів)';
-                }
-                const badgeClass = jobStatus.includes('Актуальна') ? 'pill-active' : 'pill-inactive';
+                const jobStatus = getActualStatus(job);
+                const badgeClass = jobStatus === 'Актуальна' ? 'pill-active' : 'pill-inactive';
+                const views = job.views || 0;
+                const applies = job.applies || 0;
                 
                 list.innerHTML += `
                     <div class="job-list-item">
+                        <input type="checkbox" class="job-checkbox" value="${job.id}" style="width:18px; height:18px; accent-color:#3b82f6; cursor:pointer;">
+                        
                         <div class="job-info">
                             <div class="status-pill ${badgeClass}">${jobStatus}</div>
-                            <h3>${job.title}</h3>
+                            <h3>${job.title} ${job.image ? '<i class="fas fa-image" style="color:#94a3b8; font-size:1rem;" title="Є обкладинка"></i>' : ''}</h3>
                             <p>${job.country} | ${job.category}</p>
-                            ${job.expireDate ? `<p style="font-size:0.8rem; color:#f59e0b;"><i class="fas fa-clock"></i> Активна до: ${job.expireDate}</p>` : ''}
-                            ${job.partner ? `<p style="color:#e11d48; font-size:0.8rem; margin-top:5px;"><i class="fas fa-user-secret"></i> Код: ${job.partner}</p>` : ''}
+                            ${job.partner ? `<p style="color:#e11d48; font-size:0.85rem; margin-top:2px;"><i class="fas fa-user-secret"></i> Партнер: ${job.partner}</p>` : ''}
+                            
+                            <div class="analytics-stats">
+                                <span title="Кількість розгортань опису"><i class="fas fa-eye"></i> Переглядів: ${views}</span>
+                                <span title="Кількість кліків 'Відгукнутися'"><i class="fas fa-paper-plane"></i> Відгуків: ${applies}</span>
+                            </div>
                         </div>
+                        
                         <div class="job-actions">
                             <button class="btn-clone" onclick="cloneJob('${job.id}')" title="Дублювати"><i class="fas fa-copy"></i></button>
                             <button class="btn-edit" onclick="editJob('${job.id}')" title="Редагувати"><i class="fas fa-pen"></i></button>
@@ -319,6 +388,35 @@
                 `;
             });
             renderAdminPagination();
+        }
+
+        // Масові дії
+        function toggleSelectAll(checkbox) {
+            document.querySelectorAll('.job-checkbox').forEach(cb => cb.checked = checkbox.checked);
+        }
+
+        function bulkAction(actionType) {
+            const selected = Array.from(document.querySelectorAll('.job-checkbox:checked')).map(cb => cb.value);
+            if (selected.length === 0) return alert('Спочатку виділіть вакансії галочками!');
+            
+            const actionText = actionType === 'archive' ? 'перенести в архів' : 'НАЗАВЖДИ видалити';
+            if (!confirm(`Ви впевнені, що хочете ${actionText} ${selected.length} вакансій?`)) return;
+
+            // Збираємо оновлення для Firebase (один запит замість багатьох)
+            const updates = {};
+            selected.forEach(id => {
+                if (actionType === 'archive') updates[`${id}/status`] = 'Неактуальна';
+                if (actionType === 'delete') updates[id] = null;
+            });
+
+            fetch(dbBase + '.json', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates)
+            }).then(() => {
+                document.getElementById('selectAllCb').checked = false;
+                loadAdminJobs();
+            });
         }
 
         function renderAdminPagination() {
@@ -341,6 +439,7 @@
             const totalPages = Math.ceil(filteredAdminJobs.length / perPage);
             if(page < 1 || page > totalPages) return;
             adminCurrentPage = page;
+            document.getElementById('selectAllCb').checked = false;
             renderAdminJobs();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -352,6 +451,10 @@
             btn.disabled = true;
 
             const selectedGenders = Array.from(document.querySelectorAll('.admin-gender-cb:checked')).map(cb => cb.value).join(', ');
+
+            // Зберігаємо стару аналітику, якщо вона була
+            const oldViews = (editingJobId && allJobs[editingJobId]) ? (allJobs[editingJobId].views || 0) : 0;
+            const oldApplies = (editingJobId && allJobs[editingJobId]) ? (allJobs[editingJobId].applies || 0) : 0;
 
             const jobData = {
                 status: document.getElementById('jobStatus').value,
@@ -367,8 +470,10 @@
                 minors: document.getElementById('jobMinors').checked ? 'Так' : 'Ні',
                 gender: selectedGenders, 
                 salary: document.getElementById('jobSalary').value,
-                image: document.getElementById('jobImage').value, // НОВЕ ПОЛЕ
+                image: document.getElementById('jobImage').value, 
                 desc: quill.root.innerHTML, 
+                views: oldViews,
+                applies: oldApplies,
                 timestamp: (editingJobId && allJobs[editingJobId] && allJobs[editingJobId].timestamp) ? allJobs[editingJobId].timestamp : Date.now()
             };
 
@@ -405,14 +510,14 @@
             document.getElementById('jobExpireDate').value = job.expireDate || '';
             document.getElementById('jobPartner').value = job.partner || '';
             document.getElementById('jobTitle').value = job.title;
-            document.getElementById('jobImage').value = job.image || '';
             document.getElementById('jobCountry').value = job.country;
-            document.getElementById('jobBaseCity').value = job.baseCity || ''; // Базове місто
-            document.getElementById('jobRadius').value = job.radius || '0';    // Радіус
+            document.getElementById('jobBaseCity').value = job.baseCity || ''; 
+            document.getElementById('jobRadius').value = job.radius || '0';    
             document.getElementById('jobAddress').value = job.address || '';
             document.getElementById('jobCategory').value = job.category;
             document.getElementById('jobAge').value = job.age || '';
             document.getElementById('jobMinors').checked = job.minors === 'Так';
+            document.getElementById('jobImage').value = job.image || '';
             
             const genders = job.gender ? job.gender.split(',').map(s=>s.trim()) : [];
             document.querySelectorAll('.admin-gender-cb').forEach(cb => { cb.checked = genders.includes(cb.value); });
@@ -426,9 +531,9 @@
             document.getElementById('jobForm').reset();
             document.querySelectorAll('.admin-gender-cb').forEach(cb => cb.checked = false);
             quill.root.innerHTML = ''; 
-            document.getElementById('jobImage').value = '';
             document.getElementById('jobStatus').value = 'Актуальна';
             document.getElementById('jobRadius').value = '0';
+            document.getElementById('jobImage').value = '';
             document.getElementById('formTitle').innerText = 'Створення нової вакансії';
             document.getElementById('tabAddBtn').innerHTML = '<i class="fas fa-plus"></i> Додати вакансію';
             document.getElementById('cancelEditBtn').style.display = 'none';
