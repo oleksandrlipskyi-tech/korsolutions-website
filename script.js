@@ -410,6 +410,7 @@ document.getElementById('modalTgForm').addEventListener('submit', function(e) {
 });
 
 window.changeLang = function(lang) {
+    console.log("Мова змінена на:", lang); // Додаємо лог для перевірки
     currentLang = lang;
     localStorage.setItem('lang', lang);
     renderJobs();
