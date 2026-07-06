@@ -408,6 +408,7 @@ document.getElementById('modalTgForm').addEventListener('submit', function(e) {
         body: JSON.stringify({ chat_id: chatId, text: `🔥 ВІДГУК НА ВАКАНСІЮ 🔥\n\n🎯 Вакансія: ${jobTitle}\n👤 Ім'я: ${name}\n📞 Телефон: ${phone}` })
     }).then(res => { if(res.ok) { showToast(); closeModal(); } });
 });
+
 window.changeLang = function(lang) {
     currentLang = lang;
     localStorage.setItem('lang', lang);
