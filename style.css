@@ -154,3 +154,28 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
         padding: 15px; /* Менші внутрішні відступи, щоб текст був ширшим */
     }
 }
+/* =========================================
+   СТИЛІ ДЛЯ ФОТО ТА ВІДЕО
+========================================= */
+.job-cover-img { 
+    width: 100%; 
+    height: 200px; 
+    object-fit: cover; 
+    border-radius: 8px; 
+    margin-bottom: 15px; 
+    border: 1px solid #e2e8f0; 
+}
+.rich-text-box img { 
+    max-width: 100%; 
+    height: auto; 
+    border-radius: 8px; 
+    margin: 10px 0; 
+}
+.rich-text-box iframe { 
+    max-width: 100%; 
+    width: 100%; 
+    aspect-ratio: 16/9; 
+    border-radius: 8px; 
+    margin: 10px 0; 
+    border: none;
+}
