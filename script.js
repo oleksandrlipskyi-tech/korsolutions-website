@@ -1,6 +1,12 @@
 const databaseUrl = 'https://korsolutions-jobs-default-rtdb.europe-west1.firebasedatabase.app/jobs.json';
 const botToken = '8018570948:AAEP421r9xEg7R587HYdkCGJTwiV-s6zkl0';
 const chatId = '5426420290';
+const langStrings = {
+    ua: { title: "KorSolutions", subtitle: "Знайди свою ідеальну роботу", filters: "Фільтри", search: "Пошук...", apply: "Відгукнутися" },
+    en: { title: "KorSolutions", subtitle: "Find your ideal job", filters: "Filters", search: "Search...", apply: "Apply" },
+    pl: { title: "KorSolutions", subtitle: "Znajdź swoją idealną pracę", filters: "Filtry", search: "Szukaj...", apply: "Aplikuj" },
+    ru: { title: "KorSolutions", subtitle: "Найди свою идеальную работу", filters: "Фильтры", search: "Поиск...", apply: "Откликнуться" }
+};
 
 let allJobs = [];
 let filteredJobs = [];
@@ -16,7 +22,19 @@ let isFirstLoad = true; // Слідкує за тим, чи це перший з
 // Завантажуємо збережені вакансії з пам'яті браузера
 let savedFavs = JSON.parse(localStorage.getItem('korsolutions_favs')) || [];
 
-
+function updateUI() {
+    const lang = currentLang;
+    const s = langStrings[lang] || langStrings.ua;
+    
+    // Оновлюємо заголовки
+    document.querySelector('.logo-text').innerText = s.title;
+    document.querySelector('.hero-subtitle').innerText = s.subtitle;
+    document.querySelector('.sidebar-header h3').innerHTML = `<i class="fas fa-sliders-h"></i> ${s.filters}`;
+    document.getElementById('searchInput').placeholder = s.search;
+    
+    // Оновлюємо текст кнопки відгуку на всіх картках (якщо вони вже є)
+    document.querySelectorAll('.btn-apply').forEach(btn => btn.innerText = s.apply);
+}
 
 function loadJobsFromDatabase() {
     document.getElementById('jobList').innerHTML = '<p style="text-align:center; grid-column: 1/-1; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Завантаження...</p>';
@@ -416,5 +434,6 @@ document.addEventListener('DOMContentLoaded', function() {
         currentLang = lang;
         localStorage.setItem('lang', lang);
         renderJobs();
+        updateUI();
     };
 });
