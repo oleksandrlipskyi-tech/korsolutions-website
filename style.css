@@ -1,5 +1,5 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: #1e293b; line-height: 1.6; overflow-x: hidden; /* Забороняємо горизонтальний скрол на всьому сайті */ }
+body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: #1e293b; line-height: 1.6; overflow-x: hidden; }
 .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
 .hero.mini-hero { background: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200') center/cover; height: 30vh; min-height: 250px; position: relative; display: flex; align-items: center; justify-content: center; text-align: center; color: white; }
@@ -30,7 +30,6 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .content-controls { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; width: 100%; max-width: 100%; }
 .search-box { flex-grow: 1; display: flex; align-items: center; background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 100%; box-sizing: border-box; }
 .search-box i { color: #94a3b8; font-size: 1.2rem; flex-shrink: 0; }
-/* Додано min-width: 0, щоб поле не вилазило за екран */
 .search-box input { border: none; outline: none; width: 100%; min-width: 0; margin-left: 15px; font-size: 1rem; font-family: inherit; background: transparent; }
 
 .sort-box { background: white; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px; max-width: 100%; box-sizing: border-box; }
@@ -42,12 +41,8 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 .tag i { cursor: pointer; }
 
 
-/* МАКЕТ PINTEREST (Працює тільки на ПК) */
-.jobs-grid { 
-    column-count: 2; 
-    column-gap: 20px; 
-    width: 100%; 
-}
+/* МАКЕТ PINTEREST (Працює на ПК) */
+.jobs-grid { column-count: 2; column-gap: 20px; width: 100%; }
 
 .job-card { 
     background: white; 
@@ -82,14 +77,7 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
 
 .desc-wrapper { font-size: 0.9rem; color: #64748b; word-break: break-word; }
 .desc-wrapper.collapsed { max-height: 160px; overflow: hidden; position: relative; }
-.desc-wrapper.collapsed::after {
-    content: "";
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 60px;
-    background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
-    pointer-events: none;
-}
+.desc-wrapper.collapsed::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1)); pointer-events: none; }
 .desc-wrapper.expanded { max-height: none; }
 
 .read-more-btn { color: #3b82f6; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; border: none; background: none; padding: 0; margin-top: 10px; margin-bottom: 20px; }
@@ -130,21 +118,39 @@ body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: 
    ВИПРАВЛЕНА МОБІЛЬНА ВЕРСІЯ (ДЛЯ ТЕЛЕФОНІВ)
 ========================================= */
 @media (max-width: 768px) {
-    .layout { flex-direction: column; }
+    /* 1. Зменшуємо пустоти по боках екрану */
+    .container { padding: 0 10px; }
+    
+    .layout { flex-direction: column; margin-top: 15px; }
     
     .sidebar { display: none; width: 100%; position: fixed; top: 0; left: 0; height: 100%; z-index: 200; border-radius: 0; overflow-y: auto; padding-bottom: 80px; }
     .sidebar.open { display: block; }
     .mobile-filter-btn { display: block; }
     .close-sidebar { display: block; }
     
-    /* 1 КОЛОНКА ДЛЯ КАРТОК */
-    .jobs-grid { column-count: 1; column-gap: 0; }
-    .job-card { margin-bottom: 15px; }
-
-    /* Жорстко фіксуємо ширину меню пошуку і сортування */
-    .content-controls { flex-direction: column; gap: 15px; width: 100%; max-width: 100%; }
-    .content-controls > div[style] { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 100%; }
+    /* 2. Змушуємо панель сортування та пошуку бути на 100% і стояти стовпчиком */
+    .content-controls { flex-direction: column; gap: 10px; width: 100%; margin-bottom: 15px; }
+    
+    /* Перебиваємо жорсткий HTML-стиль, який стискав екран! */
+    .content-controls > div { 
+        display: flex !important; 
+        flex-direction: column !important; 
+        gap: 10px !important; 
+        width: 100% !important; 
+    }
     
     .search-box, .sort-box { width: 100%; max-width: 100%; box-sizing: border-box; }
-    .sort-box { justify-content: space-between; }
+    
+    /* 3. Робимо вакансії широкими на весь екран */
+    .jobs-grid { 
+        display: flex; 
+        flex-direction: column; 
+        width: 100%; 
+    }
+    
+    .job-card { 
+        width: 100%; 
+        margin-bottom: 15px; 
+        padding: 15px; /* Менші внутрішні відступи, щоб текст був ширшим */
+    }
 }
