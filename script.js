@@ -409,10 +409,12 @@ document.getElementById('modalTgForm').addEventListener('submit', function(e) {
     }).then(res => { if(res.ok) { showToast(); closeModal(); } });
 });
 
-window.changeLang = function(lang) {
-    alert("Кнопку натиснуто! Мова: " + lang); // Це вікно вискочить, якщо браузер хоч якось реагує
-    console.log("Функція changeLang викликана з параметром:", lang);
-    currentLang = lang;
-    localStorage.setItem('lang', lang);
-    renderJobs();
-};
+
+document.addEventListener('DOMContentLoaded', function() {
+    window.changeLang = function(lang) {
+        console.log("Мова змінена на:", lang);
+        currentLang = lang;
+        localStorage.setItem('lang', lang);
+        renderJobs();
+    };
+});
