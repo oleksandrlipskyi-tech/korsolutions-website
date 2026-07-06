@@ -10,6 +10,7 @@ let jobsPerPage = 6;
 let activeFilters = { countries: [], categories: [], genders: [], ages: [] };
 let searchQuery = "";
 let expandedJobs = {};
+let isFirstLoad = true; // Слідкує за тим, чи це перший захід на сайт
 
 // Завантажуємо збережені вакансії з пам'яті браузера
 let savedFavs = JSON.parse(localStorage.getItem('korsolutions_favs')) || [];
@@ -86,13 +87,25 @@ window.resetFilters = function() {
     document.getElementById('cityFilter').value = "Всі"; 
     document.getElementById('radiusFilter').value = "Будь-який"; 
     document.getElementById('minorsOnlyFilter').checked = false;
-    document.getElementById('favFilter').checked = false; // Скидаємо збережені
+    document.getElementById('favFilter').checked = false; 
     document.querySelectorAll('.filter-cb').forEach(cb => cb.checked = false);
     updateCityDropdown();
     applyFilters();
 }
 
 window.applyFilters = function() {
+    // 1. ПЕРЕВІРКА УНІКАЛЬНОГО ПОСИЛАННЯ
+    const urlParams = new URLSearchParams(window.location.search);
+    let specificJobId = urlParams.get('job');
+
+    // Якщо користувач почав користуватися фільтрами - скидаємо унікальне посилання, щоб показати всі вакансії
+    if (!isFirstLoad && specificJobId) {
+        const url = new URL(window.location);
+        url.searchParams.delete('job');
+        window.history.pushState({}, '', url);
+        specificJobId = null;
+    }
+
     const statusReq = document.getElementById('statusFilter').value;
     const minorsOnly = document.getElementById('minorsOnlyFilter').checked;
     const sortMode = document.getElementById('sortSelect').value;
@@ -107,6 +120,11 @@ window.applyFilters = function() {
     const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
     filteredJobs = allJobs.filter(job => {
+        // Якщо є унікальне посилання - ігноруємо всі фільтри і показуємо тільки цю вакансію!
+        if (specificJobId) {
+            return job.id === specificJobId;
+        }
+
         const matchSearch = job.title.toLowerCase().includes(searchQuery) || job.desc.toLowerCase().includes(searchQuery);
         
         let jobStatus = job.status || 'Актуальна';
@@ -144,11 +162,17 @@ window.applyFilters = function() {
         return matchSearch && matchStatus && matchMinors && matchCountry && matchCategory && matchGender && matchAgeGroup && matchPartner && matchCity && matchRadius && matchFav;
     });
 
+    // Автоматично розгортаємо текст, якщо відкрито унікальне посилання
+    if (specificJobId && filteredJobs.length === 1) {
+        expandedJobs[specificJobId] = true;
+    }
+
     if (sortMode === 'date-desc') filteredJobs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     else if (sortMode === 'date-asc') filteredJobs.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
     else if (sortMode === 'name-asc') filteredJobs.sort((a, b) => a.title.localeCompare(b.title));
 
     currentPage = 1;
+    isFirstLoad = false; // Вимикаємо прапорець першого завантаження
     renderActiveTags();
     renderJobs();
 }
@@ -186,21 +210,51 @@ window.toggleFav = function(id) {
     applyFilters();
 }
 
-// Кнопка Поділитися
+// Кнопка Поділитися (Генерує УНІКАЛЬНЕ посилання)
 window.shareJob = function(id) {
     const job = allJobs.find(j => j.id === id);
+    const jobUrl = `${window.location.origin}${window.location.pathname}?job=${id}`; // Ось це посилання!
     const text = `🔥 Вакансія: ${job.title}\n💰 Зарплата: ${job.salary}\n🌍 Країна: ${job.country}\n\nДізнайся більше на сайті!`;
     
     if (navigator.share) {
-        navigator.share({ title: job.title, text: text, url: window.location.href }).catch(err => console.log(err));
+        navigator.share({ title: job.title, text: text, url: jobUrl }).catch(err => console.log(err));
     } else {
-        // Якщо браузер не підтримує Share (напр. старий ПК), просто копіюємо в буфер
-        navigator.clipboard.writeText(text).then(() => {
+        // Для комп'ютерів просто копіюємо в буфер
+        navigator.clipboard.writeText(text + '\n' + jobUrl).then(() => {
             document.getElementById('toastTitle').innerText = 'Скопійовано!';
             document.getElementById('toastDesc').innerText = 'Посилання скопійовано в буфер обміну.';
             showToast();
         });
     }
+}
+
+// Повна копія вакансії (Для рекрутерів)
+window.copyJob = function(id) {
+    const job = allJobs.find(j => j.id === id);
+    const jobUrl = `${window.location.origin}${window.location.pathname}?job=${id}`; // Унікальне посилання
+    
+    const temp = document.createElement('div');
+    temp.innerHTML = job.desc;
+    const plainDesc = temp.innerText;
+
+    let text = `🔥 Вакансія: ${job.title}\n📌 Статус: ${job.status || 'Актуальна'}\n🌍 Країна: ${job.country}\n`;
+    if(job.address) text += `📍 Адреса: ${job.address}\n`;
+    text += `💼 Сфера: ${job.category}\n`;
+    if(job.gender) text += `🚻 Стать: ${job.gender}\n`;
+    if(job.age) text += `⏳ Вік: ${job.age}\n`;
+    if(job.minors === 'Так') text += `👶 Підходить для неповнолітніх: ТАК\n`;
+    text += `💰 Зарплата: ${job.salary}\n\n📝 Опис:\n${plainDesc}\n\n🔗 Дізнатися більше та відгукнутися: ${jobUrl}`;
+
+    const secretDiv = document.getElementById('secretPartnerDiv');
+    if(secretDiv && secretDiv.style.display === 'block' && job.partner) {
+        text += `\n\n🕵️ Внутрішній код: ${job.partner}`;
+    }
+
+    navigator.clipboard.writeText(text).then(() => {
+        document.getElementById('toastTitle').innerText = 'Скопійовано!';
+        document.getElementById('toastDesc').innerText = 'Всю інфу та посилання збережено в буфер обміну.';
+        showToast();
+    });
 }
 
 function renderJobs() {
@@ -245,6 +299,7 @@ function renderJobs() {
             <div class="job-card ${isInactive ? 'inactive' : ''}" id="job-card-${job.id}">
                 
                 <div class="action-buttons">
+                    <button class="icon-btn" onclick="copyJob('${job.id}')" title="Скопіювати все"><i class="fas fa-copy"></i></button>
                     <button class="icon-btn fav ${isFav ? 'active' : ''}" onclick="toggleFav('${job.id}')" title="Зберегти"><i class="${isFav ? 'fas' : 'far'} fa-heart"></i></button>
                     <button class="icon-btn share" onclick="shareJob('${job.id}')" title="Поділитися"><i class="fas fa-share-alt"></i></button>
                 </div>
