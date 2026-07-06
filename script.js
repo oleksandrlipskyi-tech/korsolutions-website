@@ -11,16 +11,16 @@ let activeFilters = { countries: [], categories: [], genders: [], ages: [] };
 let searchQuery = "";
 let expandedJobs = {};
 
+// Завантажуємо збережені вакансії з пам'яті браузера
+let savedFavs = JSON.parse(localStorage.getItem('korsolutions_favs')) || [];
+
 function loadJobsFromDatabase() {
     document.getElementById('jobList').innerHTML = '<p style="text-align:center; grid-column: 1/-1; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Завантаження...</p>';
     fetch(databaseUrl)
     .then(response => response.json())
     .then(data => {
-        if (data) {
-            allJobs = Object.entries(data).map(([id, job]) => ({ id, ...job }));
-        } else {
-            allJobs = [];
-        }
+        if (data) allJobs = Object.entries(data).map(([id, job]) => ({ id, ...job }));
+        else allJobs = [];
         buildDynamicCheckboxes();
         applyFilters(); 
     })
@@ -44,36 +44,25 @@ function buildDynamicCheckboxes() {
             const val = e.target.value;
             if (e.target.checked) activeFilters[type].push(val);
             else activeFilters[type] = activeFilters[type].filter(item => item !== val);
-            
-            // Якщо змінили країну, оновлюємо список міст
             if(type === 'countries') updateCityDropdown();
-            
             applyFilters();
         });
     });
-
-    updateCityDropdown(); // Формуємо список міст при старті
+    updateCityDropdown();
 }
 
-// Функція оновлення випадаючого списку міст
 function updateCityDropdown() {
     const citySelect = document.getElementById('cityFilter');
     let availableCities = [];
-    
     allJobs.forEach(job => {
         const jobCountries = job.country ? job.country.split(',').map(s => s.trim()) : [];
         const isCountryMatch = activeFilters.countries.length === 0 || jobCountries.some(c => activeFilters.countries.includes(c));
-        if(isCountryMatch && job.baseCity) {
-            job.baseCity.split(',').forEach(c => availableCities.push(c.trim()));
-        }
+        if(isCountryMatch && job.baseCity) job.baseCity.split(',').forEach(c => availableCities.push(c.trim()));
     });
 
     const uniqueCities = [...new Set(availableCities)].sort();
     const currentSelection = citySelect.value;
-    
-    citySelect.innerHTML = '<option value="Всі">Всі міста</option>' + 
-        uniqueCities.map(city => `<option value="${city}">${city}</option>`).join('');
-        
+    citySelect.innerHTML = '<option value="Всі">Всі міста</option>' + uniqueCities.map(city => `<option value="${city}">${city}</option>`).join('');
     if (uniqueCities.includes(currentSelection)) citySelect.value = currentSelection;
     else citySelect.value = "Всі";
 }
@@ -83,16 +72,9 @@ window.toggleSecretFilter = function() {
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
 };
 
-document.getElementById('searchInput').addEventListener('input', (e) => {
-    searchQuery = e.target.value.toLowerCase();
-    applyFilters();
-});
+document.getElementById('searchInput').addEventListener('input', (e) => { searchQuery = e.target.value.toLowerCase(); applyFilters(); });
 
-window.changePerPage = function() {
-    jobsPerPage = parseInt(document.getElementById('perPageSelect').value);
-    currentPage = 1;
-    renderJobs();
-};
+window.changePerPage = function() { jobsPerPage = parseInt(document.getElementById('perPageSelect').value); currentPage = 1; renderJobs(); };
 
 window.resetFilters = function() {
     activeFilters = { countries: [], categories: [], genders: [], ages: [] };
@@ -101,13 +83,11 @@ window.resetFilters = function() {
     if(document.getElementById('partnerFilterInput')) document.getElementById('partnerFilterInput').value = "";
     document.getElementById('statusFilter').value = "Актуальна";
     document.getElementById('sortSelect').value = "date-desc";
-    
     document.getElementById('cityFilter').value = "Всі"; 
     document.getElementById('radiusFilter').value = "Будь-який"; 
-    
     document.getElementById('minorsOnlyFilter').checked = false;
+    document.getElementById('favFilter').checked = false; // Скидаємо збережені
     document.querySelectorAll('.filter-cb').forEach(cb => cb.checked = false);
-    
     updateCityDropdown();
     applyFilters();
 }
@@ -116,9 +96,9 @@ window.applyFilters = function() {
     const statusReq = document.getElementById('statusFilter').value;
     const minorsOnly = document.getElementById('minorsOnlyFilter').checked;
     const sortMode = document.getElementById('sortSelect').value;
-    
     const cityReq = document.getElementById('cityFilter').value;
     const radiusReq = document.getElementById('radiusFilter').value;
+    const showFavsOnly = document.getElementById('favFilter').checked;
 
     const partnerInput = document.getElementById('partnerFilterInput');
     const partnerReq = partnerInput ? partnerInput.value.toLowerCase().trim() : '';
@@ -149,7 +129,6 @@ window.applyFilters = function() {
         const jobGenders = job.gender ? job.gender.split(',').map(s => s.trim()) : [];
         const matchGender = activeFilters.genders.length === 0 || jobGenders.some(g => activeFilters.genders.includes(g));
 
-        // Логіка Міста та Радіусу
         const jobCity = job.baseCity ? job.baseCity.trim() : '';
         const matchCity = (cityReq === 'Всі') || (jobCity === cityReq);
         
@@ -159,8 +138,10 @@ window.applyFilters = function() {
             const searchRad = parseInt(radiusReq);
             matchRadius = jobRad <= searchRad; 
         }
+
+        const matchFav = !showFavsOnly || savedFavs.includes(job.id);
         
-        return matchSearch && matchStatus && matchMinors && matchCountry && matchCategory && matchGender && matchAgeGroup && matchPartner && matchCity && matchRadius;
+        return matchSearch && matchStatus && matchMinors && matchCountry && matchCategory && matchGender && matchAgeGroup && matchPartner && matchCity && matchRadius && matchFav;
     });
 
     if (sortMode === 'date-desc') filteredJobs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
@@ -187,6 +168,39 @@ window.removeFilter = function(type, val) {
     document.querySelectorAll('.filter-cb').forEach(cb => { if (cb.dataset.type === type && cb.value === val) cb.checked = false; });
     if(type === 'countries') updateCityDropdown();
     applyFilters();
+}
+
+// Функція трекінгу аналітики (записує кліки в БД)
+window.trackClick = function(id, type) {
+    const url = `${databaseUrl.replace('.json', '')}/${id}/${type}.json`;
+    fetch(url).then(r => r.json()).then(count => {
+        fetch(url, { method: 'PUT', body: JSON.stringify((count || 0) + 1) });
+    });
+}
+
+// Сердечко (Додати/Прибрати з обраного)
+window.toggleFav = function(id) {
+    if(savedFavs.includes(id)) savedFavs = savedFavs.filter(x => x !== id);
+    else savedFavs.push(id);
+    localStorage.setItem('korsolutions_favs', JSON.stringify(savedFavs));
+    applyFilters();
+}
+
+// Кнопка Поділитися
+window.shareJob = function(id) {
+    const job = allJobs.find(j => j.id === id);
+    const text = `🔥 Вакансія: ${job.title}\n💰 Зарплата: ${job.salary}\n🌍 Країна: ${job.country}\n\nДізнайся більше на сайті!`;
+    
+    if (navigator.share) {
+        navigator.share({ title: job.title, text: text, url: window.location.href }).catch(err => console.log(err));
+    } else {
+        // Якщо браузер не підтримує Share (напр. старий ПК), просто копіюємо в буфер
+        navigator.clipboard.writeText(text).then(() => {
+            document.getElementById('toastTitle').innerText = 'Скопійовано!';
+            document.getElementById('toastDesc').innerText = 'Посилання скопійовано в буфер обміну.';
+            showToast();
+        });
+    }
 }
 
 function renderJobs() {
@@ -223,12 +237,18 @@ function renderJobs() {
         let jobStatus = job.status || 'Актуальна';
         if (job.expireDate && job.expireDate < today) jobStatus = 'Неактуальна';
         const isInactive = jobStatus === 'Неактуальна';
-
-    const coverImageHtml = job.image ? `<img src="${job.image}" class="job-cover-img" loading="lazy" alt="${job.title}">` : '';
+        
+        const isFav = savedFavs.includes(job.id);
+        const coverImageHtml = job.image ? `<img src="${job.image}" class="job-cover-img" loading="lazy" alt="${job.title}">` : '';
 
         list.innerHTML += `
             <div class="job-card ${isInactive ? 'inactive' : ''}" id="job-card-${job.id}">
-                <button class="copy-btn" onclick="copyJob('${job.id}')" title="Скопіювати інфу"><i class="fas fa-copy"></i></button>
+                
+                <div class="action-buttons">
+                    <button class="icon-btn fav ${isFav ? 'active' : ''}" onclick="toggleFav('${job.id}')" title="Зберегти"><i class="${isFav ? 'fas' : 'far'} fa-heart"></i></button>
+                    <button class="icon-btn share" onclick="shareJob('${job.id}')" title="Поділитися"><i class="fas fa-share-alt"></i></button>
+                </div>
+
                 <div>
                     <div class="status-badge ${isInactive ? 'inactive' : 'active'}">${jobStatus}</div>
                     <h3>${job.title}</h3>
@@ -250,42 +270,16 @@ function renderJobs() {
                     </div>
                     
                     ${isLong ? `
-                        <button class="read-more-btn" onclick="toggleJobDescription('${job.id}')">
+                        <button class="read-more-btn" onclick="trackClick('${job.id}', 'views'); toggleJobDescription('${job.id}')">
                             ${isExpanded ? 'Згорнути <i class="fas fa-angle-up"></i>' : 'Розгорнути <i class="fas fa-angle-down"></i>'}
                         </button>
                     ` : ''}
                 </div>
-                <button class="btn-apply" onclick="openModal('${job.title}')">Відгукнутися</button>
+                <button class="btn-apply" onclick="trackClick('${job.id}', 'applies'); openModal('${job.title}')">Відгукнутися</button>
             </div>
         `;
     });
     renderPagination();
-}
-
-window.copyJob = function(id) {
-    const job = allJobs.find(j => j.id === id);
-    const temp = document.createElement('div');
-    temp.innerHTML = job.desc;
-    const plainDesc = temp.innerText;
-
-    let text = `🔥 Вакансія: ${job.title}\n📌 Статус: ${job.status || 'Актуальна'}\n🌍 Країна: ${job.country}\n`;
-    if(job.address) text += `📍 Адреса: ${job.address}\n`;
-    text += `💼 Сфера: ${job.category}\n`;
-    if(job.gender) text += `🚻 Стать: ${job.gender}\n`;
-    if(job.age) text += `⏳ Вік: ${job.age}\n`;
-    if(job.minors === 'Так') text += `👶 Підходить для неповнолітніх: ТАК\n`;
-    text += `💰 Зарплата: ${job.salary}\n\n📝 Опис:\n${plainDesc}\n\n🔗 Дізнатися більше: korsolutions.works`;
-
-    const secretDiv = document.getElementById('secretPartnerDiv');
-    if(secretDiv && secretDiv.style.display === 'block' && job.partner) {
-        text += `\n\n🕵️ Внутрішній код: ${job.partner}`;
-    }
-
-    navigator.clipboard.writeText(text).then(() => {
-        document.getElementById('toastTitle').innerText = 'Скопійовано!';
-        document.getElementById('toastDesc').innerText = 'Всю інфу збережено в буфер обміну.';
-        showToast();
-    });
 }
 
 window.toggleJobDescription = function(id) { 
