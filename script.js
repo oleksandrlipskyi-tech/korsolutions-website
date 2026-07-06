@@ -7,6 +7,7 @@ let filteredJobs = [];
 let currentPage = 1;
 let jobsPerPage = 6; 
 
+let currentLang = localStorage.getItem('lang') || 'ua';
 let activeFilters = { countries: [], categories: [], genders: [], ages: [] };
 let searchQuery = "";
 let expandedJobs = {};
@@ -14,6 +15,12 @@ let isFirstLoad = true; // Слідкує за тим, чи це перший з
 
 // Завантажуємо збережені вакансії з пам'яті браузера
 let savedFavs = JSON.parse(localStorage.getItem('korsolutions_favs')) || [];
+
+function changeLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('lang', lang);
+    renderJobs(); // Перемальовуємо список з новою мовою
+}
 
 function loadJobsFromDatabase() {
     document.getElementById('jobList').innerHTML = '<p style="text-align:center; grid-column: 1/-1; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Завантаження...</p>';
@@ -275,14 +282,20 @@ function renderJobs() {
     const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
     jobsToShow.forEach(job => {
+        // --- ЛОГІКА ПЕРЕКЛАДУ ---
+        // Якщо мова UA, беремо оригінал, якщо ні - шукаємо перекладене поле
+        const displayTitle = (currentLang === 'ua') ? job.title : (job['title_' + currentLang] || job.title);
+        const displayDesc = (currentLang === 'ua') ? job.desc : (job['desc_' + currentLang] || job.desc);
+
         const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = job.desc;
+        tempDiv.innerHTML = displayDesc; // Використовуємо вже перекладений текст для перевірки довжини
         const plainText = tempDiv.innerText || tempDiv.textContent || '';
         
         const isLong = plainText.length > 200; 
         const isExpanded = expandedJobs[job.id] === true;
         const wrapperClass = (isLong && !isExpanded) ? "desc-wrapper rich-text-box collapsed" : "desc-wrapper rich-text-box expanded";
 
+        // ... (інші форматування лишаються без змін)
         const formattedCountry = job.country ? job.country.split(',').map(s => s.trim()).join(', ') : '';
         const formattedCategory = job.category ? job.category.split(',').map(s => s.trim()).join(', ') : '';
         const formattedAge = job.age ? job.age.split(',').map(s => s.trim()).join(', ') : '';
@@ -293,11 +306,10 @@ function renderJobs() {
         const isInactive = jobStatus === 'Неактуальна';
         
         const isFav = savedFavs.includes(job.id);
-        const coverImageHtml = job.image ? `<img src="${job.image}" class="job-cover-img" loading="lazy" alt="${job.title}">` : '';
+        const coverImageHtml = job.image ? `<img src="${job.image}" class="job-cover-img" loading="lazy" alt="${displayTitle}">` : '';
 
         list.innerHTML += `
             <div class="job-card ${isInactive ? 'inactive' : ''}" id="job-card-${job.id}">
-                
                 <div class="action-buttons">
                     <button class="icon-btn" onclick="copyJob('${job.id}')" title="Скопіювати все"><i class="fas fa-copy"></i></button>
                     <button class="icon-btn fav ${isFav ? 'active' : ''}" onclick="toggleFav('${job.id}')" title="Зберегти"><i class="${isFav ? 'fas' : 'far'} fa-heart"></i></button>
@@ -306,7 +318,7 @@ function renderJobs() {
 
                 <div>
                     <div class="status-badge ${isInactive ? 'inactive' : 'active'}">${jobStatus}</div>
-                    <h3>${job.title}</h3>
+                    <h3>${displayTitle}</h3>
                     <div class="job-meta">
                         <p><i class="fas fa-globe"></i> ${formattedCountry}</p>
                         ${job.address ? `<p><i class="fas fa-map-marker-alt"></i> ${job.address}</p>` : ''}
@@ -321,7 +333,7 @@ function renderJobs() {
                     ${coverImageHtml}
                     
                     <div class="${wrapperClass}">
-                        ${job.desc}
+                        ${displayDesc}
                     </div>
                     
                     ${isLong ? `
@@ -330,13 +342,12 @@ function renderJobs() {
                         </button>
                     ` : ''}
                 </div>
-                <button class="btn-apply" onclick="trackClick('${job.id}', 'applies'); openModal('${job.title}')">Відгукнутися</button>
+                <button class="btn-apply" onclick="trackClick('${job.id}', 'applies'); openModal('${displayTitle.replace(/'/g, "\\'")}')">Відгукнутися</button>
             </div>
         `;
     });
     renderPagination();
 }
-
 window.toggleJobDescription = function(id) { 
     const wasExpanded = expandedJobs[id];
     expandedJobs[id] = !expandedJobs[id]; 
