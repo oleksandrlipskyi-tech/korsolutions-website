@@ -224,6 +224,8 @@ function renderJobs() {
         if (job.expireDate && job.expireDate < today) jobStatus = 'Неактуальна';
         const isInactive = jobStatus === 'Неактуальна';
 
+    const coverImageHtml = job.image ? `<img src="${job.image}" class="job-cover-img" loading="lazy" alt="${job.title}">` : '';
+
         list.innerHTML += `
             <div class="job-card ${isInactive ? 'inactive' : ''}" id="job-card-${job.id}">
                 <button class="copy-btn" onclick="copyJob('${job.id}')" title="Скопіювати інфу"><i class="fas fa-copy"></i></button>
@@ -240,6 +242,8 @@ function renderJobs() {
                         ${job.minors === 'Так' ? `<p style="color:#f59e0b; font-weight:bold;"><i class="fas fa-child"></i> Можна до 18</p>` : ''}
                     </div>
                     <div class="job-salary">${job.salary}</div>
+                    
+                    ${coverImageHtml}
                     
                     <div class="${wrapperClass}">
                         ${job.desc}
