@@ -16,11 +16,7 @@ let isFirstLoad = true; // Слідкує за тим, чи це перший з
 // Завантажуємо збережені вакансії з пам'яті браузера
 let savedFavs = JSON.parse(localStorage.getItem('korsolutions_favs')) || [];
 
-function changeLang(lang) {
-    currentLang = lang;
-    localStorage.setItem('lang', lang);
-    renderJobs(); // Перемальовуємо список з новою мовою
-}
+
 
 function loadJobsFromDatabase() {
     document.getElementById('jobList').innerHTML = '<p style="text-align:center; grid-column: 1/-1; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Завантаження...</p>';
@@ -412,3 +408,8 @@ document.getElementById('modalTgForm').addEventListener('submit', function(e) {
         body: JSON.stringify({ chat_id: chatId, text: `🔥 ВІДГУК НА ВАКАНСІЮ 🔥\n\n🎯 Вакансія: ${jobTitle}\n👤 Ім'я: ${name}\n📞 Телефон: ${phone}` })
     }).then(res => { if(res.ok) { showToast(); closeModal(); } });
 });
+window.changeLang = function(lang) {
+    currentLang = lang;
+    localStorage.setItem('lang', lang);
+    renderJobs();
+};
