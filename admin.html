@@ -185,6 +185,10 @@
                         <i class="fas fa-money-bill-wave"></i>
                         <input type="text" id="jobSalary" placeholder="Зарплата (напр. від 1900€/міс)" required>
                     </div>
+                    <div class="input-group">
+                        <i class="fas fa-image"></i>
+                        <input type="url" id="jobImage" placeholder="Посилання на головне фото (URL) - необов'язково">
+                    </div>
                     
                     <div style="margin-bottom: 20px;">
                         <div style="color: #64748b; font-weight: 600; margin-bottom: 5px; padding-left: 5px;">Опис вакансії:</div>
@@ -212,7 +216,7 @@
         var quill = new Quill('#editor-container', {
             theme: 'snow',
             placeholder: 'Вставте готовий текст з Telegram сюди...',
-            modules: { toolbar: [ ['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean'] ] }
+            modules: { toolbar: [ ['bold', 'italic', 'underline', 'link'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['image', 'video'], ['clean'] ] }
         });
 
         function checkPassword() {
@@ -355,14 +359,15 @@
                 partner: document.getElementById('jobPartner').value, 
                 title: document.getElementById('jobTitle').value,
                 country: document.getElementById('jobCountry').value,
-                baseCity: document.getElementById('jobBaseCity').value, // НОВЕ: Базове місто
-                radius: document.getElementById('jobRadius').value,     // НОВЕ: Відстань
+                baseCity: document.getElementById('jobBaseCity').value, 
+                radius: document.getElementById('jobRadius').value,     
                 address: document.getElementById('jobAddress').value, 
                 category: document.getElementById('jobCategory').value,
                 age: document.getElementById('jobAge').value,
                 minors: document.getElementById('jobMinors').checked ? 'Так' : 'Ні',
                 gender: selectedGenders, 
                 salary: document.getElementById('jobSalary').value,
+                image: document.getElementById('jobImage').value, // НОВЕ ПОЛЕ
                 desc: quill.root.innerHTML, 
                 timestamp: (editingJobId && allJobs[editingJobId] && allJobs[editingJobId].timestamp) ? allJobs[editingJobId].timestamp : Date.now()
             };
@@ -400,6 +405,7 @@
             document.getElementById('jobExpireDate').value = job.expireDate || '';
             document.getElementById('jobPartner').value = job.partner || '';
             document.getElementById('jobTitle').value = job.title;
+            document.getElementById('jobImage').value = job.image || '';
             document.getElementById('jobCountry').value = job.country;
             document.getElementById('jobBaseCity').value = job.baseCity || ''; // Базове місто
             document.getElementById('jobRadius').value = job.radius || '0';    // Радіус
@@ -420,6 +426,7 @@
             document.getElementById('jobForm').reset();
             document.querySelectorAll('.admin-gender-cb').forEach(cb => cb.checked = false);
             quill.root.innerHTML = ''; 
+            document.getElementById('jobImage').value = '';
             document.getElementById('jobStatus').value = 'Актуальна';
             document.getElementById('jobRadius').value = '0';
             document.getElementById('formTitle').innerText = 'Створення нової вакансії';
