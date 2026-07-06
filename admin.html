@@ -497,6 +497,15 @@
             const btn = document.getElementById('submitBtn');
             btn.innerText = 'Збереження...';
             btn.disabled = true;
+            
+            async function translateText(text, lang) {
+    const response = await fetch('https://script.google.com/macros/s/AKfycby2836-eQqP3uxyuNksr0d4nq_tqa6KGynTt08LxuK-3AiawkdgPR9yq3-ALAayjS-Mfw/exec', {
+        method: 'POST',
+        body: JSON.stringify({text: text, lang: lang})
+    });
+    const data = await response.json();
+    return data.translated;
+}
 
             const selectedGenders = Array.from(document.querySelectorAll('.admin-gender-cb:checked')).map(cb => cb.value).join(', ');
 
