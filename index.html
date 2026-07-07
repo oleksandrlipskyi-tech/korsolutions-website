@@ -19,54 +19,54 @@
             <button onclick="changeLanguage('ru')" id="btn-lang-ru">RU</button>
         </div>
         <div class="hero-content">
-            <h1 class="logo-text">KorSolutions</h1>
-            <p class="hero-subtitle">Знайди свою ідеальну роботу</p>
+            <h1 class="logo-text" data-i18n="title">KorSolutions</h1>
+            <p class="hero-subtitle" data-i18n="subtitle">Знайди свою ідеальну роботу</p>
         </div>
     </header>
 
     <div class="container layout">
-        <button class="mobile-filter-btn" onclick="toggleSidebar()"><i class="fas fa-filter"></i> <span id="ui-filter-btn">Показати фільтри</span></button>
+        <button class="mobile-filter-btn" onclick="toggleSidebar()"><i class="fas fa-filter"></i> <span data-i18n="showFilters">Показати фільтри</span></button>
 
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header" ondblclick="toggleSecretFilter()" title="Подвійний клік приховує таємницю..." style="cursor: pointer;">
-                <h3 id="ui-filter-title"><i class="fas fa-sliders-h"></i> Фільтри</h3>
+                <h3><i class="fas fa-sliders-h"></i> <span data-i18n="filtersTitle">Фільтри</span></h3>
                 <button class="close-sidebar" onclick="toggleSidebar()">&times;</button>
             </div>
 
             <div class="filter-section" id="secretPartnerDiv" style="display: none; background: #fff1f2; padding: 10px; border-radius: 8px; border: 1px dashed #f43f5e;">
                 <div class="filter-header">
-                    <span style="color: #e11d48; font-weight: 700;"><i class="fas fa-user-secret"></i> Код партнера</span>
+                    <span style="color: #e11d48; font-weight: 700;"><i class="fas fa-user-secret"></i> <span data-i18n="partnerCode">Код партнера</span></span>
                 </div>
                 <div class="filter-body open">
-                    <input type="text" id="partnerFilterInput" class="form-select" placeholder="Введіть код..." oninput="applyFilters()">
+                    <input type="text" id="partnerFilterInput" class="form-select" data-i18n-placeholder="partnerPlaceholder" placeholder="Введіть код..." oninput="applyFilters()">
                 </div>
             </div>
 
             <div class="filter-section">
                 <div class="filter-header" onclick="toggleAccordion('favAcc')">
-                    <span style="color: #ef4444; font-weight: 700;"><i class="fas fa-heart"></i> Збережені</span> <i class="fas fa-chevron-down"></i>
+                    <span style="color: #ef4444; font-weight: 700;"><i class="fas fa-heart"></i> <span data-i18n="sbSaved">Збережені</span></span> <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="filter-body open" id="favAcc">
-                    <label><input type="checkbox" id="favFilter" onchange="applyFilters()"> Тільки мої обрані</label>
+                    <label><input type="checkbox" id="favFilter" onchange="applyFilters()"> <span data-i18n="sbFavs">Тільки мої обрані</span></label>
                 </div>
             </div>
 
             <div class="filter-section">
                 <div class="filter-header" onclick="toggleAccordion('statusAcc')">
-                    <span>Актуальність</span> <i class="fas fa-chevron-down"></i>
+                    <span data-i18n="sbStatus">Актуальність</span> <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="filter-body open" id="statusAcc">
                     <select id="statusFilter" class="form-select" onchange="applyFilters()">
-                        <option value="Всі">Всі вакансії</option>
-                        <option value="Актуальна" selected>Тільки актуальні</option>
-                        <option value="Неактуальна">Архів (Неактуальні)</option>
+                        <option value="Всі" data-i18n="optAllJobs">Всі вакансії</option>
+                        <option value="Актуальна" selected data-i18n="optOnlyActive">Тільки актуальні</option>
+                        <option value="Неактуальна" data-i18n="optArchive">Архів (Неактуальні)</option>
                     </select>
                 </div>
             </div>
 
             <div class="filter-section">
                 <div class="filter-header" onclick="toggleAccordion('countryAcc')">
-                    <span>Країна</span> <i class="fas fa-chevron-down"></i>
+                    <span data-i18n="sbCountry">Країна</span> <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="filter-body open" id="countryAcc">
                     <div id="dynamicCountries"></div>
@@ -75,34 +75,34 @@
 
             <div class="filter-section">
                 <div class="filter-header" onclick="toggleAccordion('cityAcc')">
-                    <span>Місто / Регіон</span> <i class="fas fa-chevron-down"></i>
+                    <span data-i18n="sbCity">Місто / Регіон</span> <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="filter-body open" id="cityAcc">
                     <select id="cityFilter" class="form-select" onchange="applyFilters()">
-                        <option value="Всі">Всі міста</option>
+                        <option value="Всі" data-i18n="optAllCities">Всі міста</option>
                     </select>
                 </div>
             </div>
 
             <div class="filter-section">
                 <div class="filter-header" onclick="toggleAccordion('radiusAcc')">
-                    <span>Радіус від міста</span> <i class="fas fa-chevron-down"></i>
+                    <span data-i18n="sbRadius">Радіус від міста</span> <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="filter-body open" id="radiusAcc">
                     <select id="radiusFilter" class="form-select" onchange="applyFilters()">
-                        <option value="Будь-який">Будь-яка відстань</option>
-                        <option value="0">Точно в місті (0 км)</option>
-                        <option value="10">До 10 км</option>
-                        <option value="30">До 30 км</option>
-                        <option value="50">До 50 км</option>
-                        <option value="100">До 100 км</option>
+                        <option value="Будь-який" data-i18n="optAnyDist">Будь-яка відстань</option>
+                        <option value="0" data-i18n="opt0km">Точно в місті (0 км)</option>
+                        <option value="10" data-i18n="opt10km">До 10 км</option>
+                        <option value="30" data-i18n="opt30km">До 30 км</option>
+                        <option value="50" data-i18n="opt50km">До 50 км</option>
+                        <option value="100" data-i18n="opt100km">До 100 км</option>
                     </select>
                 </div>
             </div>
 
             <div class="filter-section">
                 <div class="filter-header" onclick="toggleAccordion('categoryAcc')">
-                    <span>Сфера роботи</span> <i class="fas fa-chevron-down"></i>
+                    <span data-i18n="sbCategory">Сфера роботи</span> <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="filter-body" id="categoryAcc">
                     <div id="dynamicCategories"></div>
@@ -111,10 +111,10 @@
             
             <div class="filter-section">
                 <div class="filter-header" onclick="toggleAccordion('ageAcc')">
-                    <span>Вік кандидата</span> <i class="fas fa-chevron-down"></i>
+                    <span data-i18n="sbAge">Вік кандидата</span> <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="filter-body" id="ageAcc">
-                    <label><input type="checkbox" id="minorsOnlyFilter" onchange="applyFilters()"> Тільки для неповнолітніх (до 18)</label>
+                    <label><input type="checkbox" id="minorsOnlyFilter" onchange="applyFilters()"> <span data-i18n="sbMinors">Тільки для неповнолітніх (до 18)</span></label>
                     <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 5px 0;">
                     <div id="dynamicAges"></div>
                 </div>
@@ -122,39 +122,39 @@
 
             <div class="filter-section">
                 <div class="filter-header" onclick="toggleAccordion('genderAcc')">
-                    <span>Стать</span> <i class="fas fa-chevron-down"></i>
+                    <span data-i18n="sbGender">Стать</span> <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="filter-body" id="genderAcc">
-                    <label><input type="checkbox" value="Чоловіки" class="filter-cb" data-type="genders"> Чоловіки</label>
-                    <label><input type="checkbox" value="Жінки" class="filter-cb" data-type="genders"> Жінки</label>
-                    <label><input type="checkbox" value="Сімейні пари" class="filter-cb" data-type="genders"> Сімейні пари</label>
+                    <label><input type="checkbox" value="Чоловіки" class="filter-cb" data-type="genders"> <span data-i18n="Чоловіки">Чоловіки</span></label>
+                    <label><input type="checkbox" value="Жінки" class="filter-cb" data-type="genders"> <span data-i18n="Жінки">Жінки</span></label>
+                    <label><input type="checkbox" value="Сімейні пари" class="filter-cb" data-type="genders"> <span data-i18n="Сімейні пари">Сімейні пари</span></label>
                 </div>
             </div>
 
-            <button class="btn-reset" onclick="resetFilters()"><i class="fas fa-sync-alt"></i> Скинути всі фільтри</button>
+            <button class="btn-reset" onclick="resetFilters()"><i class="fas fa-sync-alt"></i> <span data-i18n="resetFilters">Скинути всі фільтри</span></button>
         </aside>
 
         <main class="main-content">
             <div class="content-controls">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Пошук (наприклад: Склад)...">
+                    <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Пошук (наприклад: Склад)...">
                 </div>
                 <div style="display: flex; gap: 15px;">
                     <div class="sort-box">
                         <i class="fas fa-sort-amount-down"></i>
                         <select id="sortSelect" onchange="applyFilters()">
-                            <option value="date-desc">Спершу нові</option>
-                            <option value="date-asc">Спершу старі</option>
-                            <option value="name-asc">За алфавітом (А-Я)</option>
+                            <option value="date-desc" data-i18n="sortNew">Спершу нові</option>
+                            <option value="date-asc" data-i18n="sortOld">Спершу старі</option>
+                            <option value="name-asc" data-i18n="sortAz">За алфавітом (А-Я)</option>
                         </select>
                     </div>
                     <div class="sort-box">
                         <i class="fas fa-list-ol"></i>
                         <select id="perPageSelect" onchange="changePerPage()">
-                            <option value="6">6 на сторінці</option>
-                            <option value="12">12 на сторінці</option>
-                            <option value="24">24 на сторінці</option>
+                            <option value="6" data-i18n="perPage6">6 на сторінці</option>
+                            <option value="12" data-i18n="perPage12">12 на сторінці</option>
+                            <option value="24" data-i18n="perPage24">24 на сторінці</option>
                         </select>
                     </div>
                 </div>
@@ -169,17 +169,17 @@
     <div id="jobModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
-            <h2 id="modalJobTitle">Відгук на вакансію</h2>
+            <h2 id="modalJobTitle" style="margin-bottom: 20px;"></h2>
             <form id="modalTgForm">
                 <div class="input-group">
                     <i class="fas fa-user"></i>
-                    <input type="text" id="modalName" placeholder="Ваше ім'я та прізвище" required>
+                    <input type="text" id="modalName" data-i18n-placeholder="modalNamePlaceholder" placeholder="Ваше ім'я та прізвище" required>
                 </div>
                 <div class="input-group">
                     <i class="fas fa-phone"></i>
-                    <input type="tel" id="modalPhone" placeholder="Номер телефону" required>
+                    <input type="tel" id="modalPhone" data-i18n-placeholder="modalPhonePlaceholder" placeholder="Номер телефону" required>
                 </div>
-                <button type="submit" class="btn-submit" id="ui-modal-submit">Підтвердити відгук</button>
+                <button type="submit" class="btn-submit" data-i18n="confirmApplyBtn">Підтвердити відгук</button>
             </form>
         </div>
     </div>
