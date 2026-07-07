@@ -1,24 +1,45 @@
-
-
 const databaseUrl = 'https://korsolutions-jobs-default-rtdb.europe-west1.firebasedatabase.app/jobs.json';
 const botToken = '8018570948:AAEP421r9xEg7R587HYdkCGJTwiV-s6zkl0';
 const chatId = '5426420290';
-
+const langStrings = {
+    ua: { title: "KorSolutions", subtitle: "Знайди свою ідеальну роботу", filters: "Фільтри", search: "Пошук (наприклад: Склад)...", apply: "Відгукнутися", applyBtn: "Підтвердити відгук", showFilters: "Показати фільтри" },
+    en: { title: "KorSolutions", subtitle: "Find your ideal job", filters: "Filters", search: "Search (e.g. Warehouse)...", apply: "Apply", applyBtn: "Confirm application", showFilters: "Show filters" },
+    pl: { title: "KorSolutions", subtitle: "Znajdź swoją idealną pracę", filters: "Filtry", search: "Szukaj (np. Magazyn)...", apply: "Aplikuj", applyBtn: "Potwierdź zgłoszenie", showFilters: "Pokaż filtry" },
+    ru: { title: "KorSolutions", subtitle: "Найди свою идеальную работу", filters: "Фильтры", search: "Поиск (например: Склад)...", apply: "Откликнуться", applyBtn: "Подтвердить отклик", showFilters: "Показать фильтры" }
+};
 
 let allJobs = [];
 let filteredJobs = [];
 let currentPage = 1;
 let jobsPerPage = 6; 
 
+let currentLang = localStorage.getItem('lang') || 'ua';
 let activeFilters = { countries: [], categories: [], genders: [], ages: [] };
 let searchQuery = "";
 let expandedJobs = {};
-let isFirstLoad = true; // Слідкує за тим, чи це перший захід на сайт
+let isFirstLoad = true; 
 
-// Завантажуємо збережені вакансії з пам'яті браузера
 let savedFavs = JSON.parse(localStorage.getItem('korsolutions_favs')) || [];
 
+document.addEventListener('DOMContentLoaded', () => {
+    // Встановлення активної кнопки мови
+    const activeBtn = document.getElementById(`btn-lang-${currentLang}`);
+    if (activeBtn) activeBtn.classList.add('active');
 
+    // Переклад статичного тексту інтерфейсу
+    const ui = langStrings[currentLang];
+    if (document.querySelector('.logo-text')) document.querySelector('.logo-text').innerText = ui.title;
+    if (document.querySelector('.hero-subtitle')) document.querySelector('.hero-subtitle').innerText = ui.subtitle;
+    if (document.getElementById('searchInput')) document.getElementById('searchInput').placeholder = ui.search;
+    if (document.getElementById('ui-filter-title')) document.getElementById('ui-filter-title').innerHTML = `<i class="fas fa-sliders-h"></i> ${ui.filters}`;
+    if (document.getElementById('ui-filter-btn')) document.getElementById('ui-filter-btn').innerText = ui.showFilters;
+    if (document.getElementById('ui-modal-submit')) document.getElementById('ui-modal-submit').innerText = ui.applyBtn;
+});
+
+window.changeLanguage = function(lang) {
+    localStorage.setItem('lang', lang);
+    location.reload(); 
+}
 
 function loadJobsFromDatabase() {
     document.getElementById('jobList').innerHTML = '<p style="text-align:center; grid-column: 1/-1; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Завантаження...</p>';
@@ -99,11 +120,9 @@ window.resetFilters = function() {
 }
 
 window.applyFilters = function() {
-    // 1. ПЕРЕВІРКА УНІКАЛЬНОГО ПОСИЛАННЯ
     const urlParams = new URLSearchParams(window.location.search);
     let specificJobId = urlParams.get('job');
 
-    // Якщо користувач почав користуватися фільтрами - скидаємо унікальне посилання, щоб показати всі вакансії
     if (!isFirstLoad && specificJobId) {
         const url = new URL(window.location);
         url.searchParams.delete('job');
@@ -125,7 +144,6 @@ window.applyFilters = function() {
     const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
     filteredJobs = allJobs.filter(job => {
-        // Якщо є унікальне посилання - ігноруємо всі фільтри і показуємо тільки цю вакансію!
         if (specificJobId) {
             return job.id === specificJobId;
         }
@@ -167,7 +185,6 @@ window.applyFilters = function() {
         return matchSearch && matchStatus && matchMinors && matchCountry && matchCategory && matchGender && matchAgeGroup && matchPartner && matchCity && matchRadius && matchFav;
     });
 
-    // Автоматично розгортаємо текст, якщо відкрито унікальне посилання
     if (specificJobId && filteredJobs.length === 1) {
         expandedJobs[specificJobId] = true;
     }
@@ -177,7 +194,7 @@ window.applyFilters = function() {
     else if (sortMode === 'name-asc') filteredJobs.sort((a, b) => a.title.localeCompare(b.title));
 
     currentPage = 1;
-    isFirstLoad = false; // Вимикаємо прапорець першого завантаження
+    isFirstLoad = false; 
     renderActiveTags();
     renderJobs();
 }
@@ -199,7 +216,6 @@ window.removeFilter = function(type, val) {
     applyFilters();
 }
 
-// Функція трекінгу аналітики (записує кліки в БД)
 window.trackClick = function(id, type) {
     const url = `${databaseUrl.replace('.json', '')}/${id}/${type}.json`;
     fetch(url).then(r => r.json()).then(count => {
@@ -207,7 +223,6 @@ window.trackClick = function(id, type) {
     });
 }
 
-// Сердечко (Додати/Прибрати з обраного)
 window.toggleFav = function(id) {
     if(savedFavs.includes(id)) savedFavs = savedFavs.filter(x => x !== id);
     else savedFavs.push(id);
@@ -215,16 +230,14 @@ window.toggleFav = function(id) {
     applyFilters();
 }
 
-// Кнопка Поділитися (Генерує УНІКАЛЬНЕ посилання)
 window.shareJob = function(id) {
     const job = allJobs.find(j => j.id === id);
-    const jobUrl = `${window.location.origin}${window.location.pathname}?job=${id}`; // Ось це посилання!
+    const jobUrl = `${window.location.origin}${window.location.pathname}?job=${id}`; 
     const text = `🔥 Вакансія: ${job.title}\n💰 Зарплата: ${job.salary}\n🌍 Країна: ${job.country}\n\nДізнайся більше на сайті!`;
     
     if (navigator.share) {
         navigator.share({ title: job.title, text: text, url: jobUrl }).catch(err => console.log(err));
     } else {
-        // Для комп'ютерів просто копіюємо в буфер
         navigator.clipboard.writeText(text + '\n' + jobUrl).then(() => {
             document.getElementById('toastTitle').innerText = 'Скопійовано!';
             document.getElementById('toastDesc').innerText = 'Посилання скопійовано в буфер обміну.';
@@ -233,10 +246,9 @@ window.shareJob = function(id) {
     }
 }
 
-// Повна копія вакансії (Для рекрутерів)
 window.copyJob = function(id) {
     const job = allJobs.find(j => j.id === id);
-    const jobUrl = `${window.location.origin}${window.location.pathname}?job=${id}`; // Унікальне посилання
+    const jobUrl = `${window.location.origin}${window.location.pathname}?job=${id}`; 
     
     const temp = document.createElement('div');
     temp.innerHTML = job.desc;
@@ -278,18 +290,20 @@ function renderJobs() {
 
     const d = new Date();
     const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const uiStr = langStrings[currentLang];
 
     jobsToShow.forEach(job => {
+        const displayTitle = (currentLang === 'ua') ? job.title : (job['title_' + currentLang] || job.title);
+        const displayDesc = (currentLang === 'ua') ? job.desc : (job['desc_' + currentLang] || job.desc);
 
         const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = displayDesc; // Використовуємо вже перекладений текст для перевірки довжини
+        tempDiv.innerHTML = displayDesc; 
         const plainText = tempDiv.innerText || tempDiv.textContent || '';
         
         const isLong = plainText.length > 200; 
         const isExpanded = expandedJobs[job.id] === true;
         const wrapperClass = (isLong && !isExpanded) ? "desc-wrapper rich-text-box collapsed" : "desc-wrapper rich-text-box expanded";
 
-        // ... (інші форматування лишаються без змін)
         const formattedCountry = job.country ? job.country.split(',').map(s => s.trim()).join(', ') : '';
         const formattedCategory = job.category ? job.category.split(',').map(s => s.trim()).join(', ') : '';
         const formattedAge = job.age ? job.age.split(',').map(s => s.trim()).join(', ') : '';
@@ -336,12 +350,13 @@ function renderJobs() {
                         </button>
                     ` : ''}
                 </div>
-                <button class="btn-apply" onclick="trackClick('${job.id}', 'applies'); openModal('${displayTitle.replace(/'/g, "\\'")}')">Відгукнутися</button>
+                <button class="btn-apply" onclick="trackClick('${job.id}', 'applies'); openModal('${displayTitle.replace(/'/g, "\\'")}')">${uiStr.apply}</button>
             </div>
         `;
     });
     renderPagination();
 }
+
 window.toggleJobDescription = function(id) { 
     const wasExpanded = expandedJobs[id];
     expandedJobs[id] = !expandedJobs[id]; 
@@ -406,4 +421,3 @@ document.getElementById('modalTgForm').addEventListener('submit', function(e) {
         body: JSON.stringify({ chat_id: chatId, text: `🔥 ВІДГУК НА ВАКАНСІЮ 🔥\n\n🎯 Вакансія: ${jobTitle}\n👤 Ім'я: ${name}\n📞 Телефон: ${phone}` })
     }).then(res => { if(res.ok) { showToast(); closeModal(); } });
 });
-
