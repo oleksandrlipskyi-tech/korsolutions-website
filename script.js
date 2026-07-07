@@ -22,19 +22,7 @@ let isFirstLoad = true; // Слідкує за тим, чи це перший з
 // Завантажуємо збережені вакансії з пам'яті браузера
 let savedFavs = JSON.parse(localStorage.getItem('korsolutions_favs')) || [];
 
-function updateUI() {
-    const lang = currentLang;
-    const s = langStrings[lang] || langStrings.ua;
-    
-    // Оновлюємо заголовки
-    document.querySelector('.logo-text').innerText = s.title;
-    document.querySelector('.hero-subtitle').innerText = s.subtitle;
-    document.querySelector('.sidebar-header h3').innerHTML = `<i class="fas fa-sliders-h"></i> ${s.filters}`;
-    document.getElementById('searchInput').placeholder = s.search;
-    
-    // Оновлюємо текст кнопки відгуку на всіх картках (якщо вони вже є)
-    document.querySelectorAll('.btn-apply').forEach(btn => btn.innerText = s.apply);
-}
+
 
 function loadJobsFromDatabase() {
     document.getElementById('jobList').innerHTML = '<p style="text-align:center; grid-column: 1/-1; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Завантаження...</p>';
@@ -427,13 +415,3 @@ document.getElementById('modalTgForm').addEventListener('submit', function(e) {
     }).then(res => { if(res.ok) { showToast(); closeModal(); } });
 });
 
-
-document.addEventListener('DOMContentLoaded', function() {
-    window.changeLang = function(lang) {
-        console.log("Мова змінена на:", lang);
-        currentLang = lang;
-        localStorage.setItem('lang', lang);
-        renderJobs();
-        updateUI();
-    };
-});
