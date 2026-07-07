@@ -1,6 +1,6 @@
 const databaseUrl = 'https://korsolutions-jobs-default-rtdb.europe-west1.firebasedatabase.app/jobs.json';
 const botToken = '8018570948:AAEP421r9xEg7R587HYdkCGJTwiV-s6zkl0'; // Ваш токен
-const chatId = '542620290'; // ВАШ ID ГРУПИ З МІНУСОМ
+const chatId = '5426420290'; // ВАШ ID ГРУПИ З МІНУСОМ
 
 // Автоматичне визначення мови
 let currentLang = localStorage.getItem('lang');
