@@ -416,6 +416,7 @@ function renderJobs() {
 
         const readMoreText = isExpanded ? `${t('readLess')} <i class="fas fa-angle-up"></i>` : `${t('readMore')} <i class="fas fa-angle-down"></i>`;
 
+        // ЗМІНА ТУТ: додано job.id у виклик openModal
         list.innerHTML += `
             <div class="job-card ${isInactive ? 'inactive' : ''}" id="job-card-${job.id}">
                 <div class="action-buttons">
@@ -450,7 +451,7 @@ function renderJobs() {
                         </button>
                     ` : ''}
                 </div>
-                <button class="btn-apply" onclick="trackClick('${job.id}', 'applies'); openModal('${displayTitle.replace(/'/g, "\\'")}')">${t('applyBtn')}</button>
+                <button class="btn-apply" onclick="trackClick('${job.id}', 'applies'); openModal('${job.id}', '${displayTitle.replace(/'/g, "\\'")}')">${t('applyBtn')}</button>
             </div>
         `;
     });
@@ -496,7 +497,13 @@ loadJobsFromDatabase();
 window.toggleAccordion = function(id) { document.getElementById(id).classList.toggle('open'); }
 window.toggleSidebar = function() { document.getElementById('sidebar').classList.toggle('open'); }
 
-function openModal(jobTitle) { document.getElementById('modalJobTitle').innerText = jobTitle; document.getElementById('jobModal').style.display = 'flex'; }
+// ЗМІНА ТУТ: додано збереження jobId у dataset
+function openModal(jobId, jobTitle) { 
+    document.getElementById('modalJobTitle').innerText = jobTitle; 
+    document.getElementById('modalJobTitle').dataset.jobId = jobId;
+    document.getElementById('jobModal').style.display = 'flex'; 
+}
+
 function closeModal() { document.getElementById('jobModal').style.display = 'none'; document.getElementById('modalTgForm').reset(); }
 window.onclick = function(event) { if (event.target == document.getElementById('jobModal')) closeModal(); }
 
@@ -506,15 +513,23 @@ function showToast() {
     setTimeout(() => { toast.classList.remove('show'); }, 3000);
 }
 
+// ЗМІНА ТУТ: отримання jobId та генерація посилання на сторінку
 document.getElementById('modalTgForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const name = document.getElementById('modalName').value;
     const phone = document.getElementById('modalPhone').value;
     const jobTitle = document.getElementById('modalJobTitle').innerText;
+    const jobId = document.getElementById('modalJobTitle').dataset.jobId; 
     
+    // Формуємо повне посилання на вакансію
+    const jobUrl = `${window.location.origin}${window.location.pathname}?job=${jobId}`;
+
     fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text: `🔥 ВІДГУК НА ВАКАНСІЮ 🔥\n\n🎯 Вакансія: ${jobTitle}\n👤 Ім'я: ${name}\n📞 Телефон: ${phone}` })
+        body: JSON.stringify({ 
+            chat_id: chatId, 
+            text: `🔥 ВІДГУК НА ВАКАНСІЮ 🔥\n\n🎯 Вакансія: ${jobTitle}\n👤 Ім'я: ${name}\n📞 Телефон: ${phone}\n🔗 Посилання: ${jobUrl}` 
+        })
     }).then(res => { if(res.ok) { showToast(); closeModal(); } });
 });
