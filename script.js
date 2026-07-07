@@ -2,7 +2,7 @@ const databaseUrl = 'https://korsolutions-jobs-default-rtdb.europe-west1.firebas
 const botToken = '8018570948:AAEP421r9xEg7R587HYdkCGJTwiV-s6zkl0';
 const chatId = '5426420290';
 
-// Автоматичне визначення мови при першому заході
+// Автоматичне визначення мови
 let currentLang = localStorage.getItem('lang');
 if (!currentLang) {
     const browserLang = (navigator.language || navigator.userLanguage).slice(0, 2).toLowerCase();
@@ -13,7 +13,7 @@ if (!currentLang) {
     localStorage.setItem('lang', currentLang);
 }
 
-// Словник ТІЛЬКИ для інтерфейсу та фіксованих значень (стать, статус)
+// Словник інтерфейсу
 const i18n = {
     "title": { ua: "KorSolutions", en: "KorSolutions", pl: "KorSolutions", ru: "KorSolutions" },
     "subtitle": { ua: "Знайди свою ідеальну роботу", en: "Find your ideal job", pl: "Znajdź swoją idealną pracę", ru: "Найди свою идеальную работу" },
@@ -61,7 +61,22 @@ const i18n = {
     "untilDate": { ua: "До", en: "Until", pl: "Do", ru: "До" },
     "readMore": { ua: "Розгорнути", en: "Read more", pl: "Rozwiń", ru: "Развернуть" },
     "readLess": { ua: "Згорнути", en: "Read less", pl: "Zwiń", ru: "Свернуть" },
-    "notFound": { ua: "За вказаними параметрами вакансій не знайдено.", en: "No jobs found.", pl: "Nie znaleziono ofert.", ru: "Вакансий не найдено." }
+    "notFound": { ua: "За вказаними параметрами вакансій не знайдено.", en: "No jobs found.", pl: "Nie znaleziono ofert.", ru: "Вакансий не найдено." },
+    
+    // Плейсхолдери для модалки (ВІДГУК)
+    "modalNamePlaceholder": { ua: "Ваше ім'я та прізвище", en: "Your Full Name", pl: "Imię i nazwisko", ru: "Ваше имя и фамилия" },
+    "modalPhonePlaceholder": { ua: "Номер телефону", en: "Phone Number", pl: "Numer telefonu", ru: "Номер телефона" },
+    
+    // Словник популярних слів для "старих" вакансій
+    "Польща": { ua: "Польща", en: "Poland", pl: "Polska", ru: "Польша" },
+    "Німеччина": { ua: "Німеччина", en: "Germany", pl: "Niemcy", ru: "Германия" },
+    "Чехія": { ua: "Чехія", en: "Czech Republic", pl: "Czechy", ru: "Чехия" },
+    "Нідерланди": { ua: "Нідерланди", en: "Netherlands", pl: "Holandia", ru: "Нидерланды" },
+    "Склад": { ua: "Склад", en: "Warehouse", pl: "Magazyn", ru: "Склад" },
+    "Будівництво": { ua: "Будівництво", en: "Construction", pl: "Budownictwo", ru: "Строительство" },
+    "Завод": { ua: "Завод", en: "Factory", pl: "Fabryka", ru: "Завод" },
+    "Прибирання": { ua: "Прибирання", en: "Cleaning", pl: "Sprzątanie", ru: "Уборка" },
+    "Водій": { ua: "Водій", en: "Driver", pl: "Kierowca", ru: "Водитель" }
 };
 
 function t(key) {
@@ -69,10 +84,16 @@ function t(key) {
     return i18n[key][currentLang] || i18n[key]['ua'];
 }
 
-// НОВА ФУНКЦІЯ: Читає переклад динамічних полів прямо з бази даних
+// Розумний переклад динамічних полів (країни, сфери)
 function getTranslatedDynamicField(baseText, fieldName) {
     if (currentLang === 'ua' || !baseText) return baseText;
     
+    // 1. Спочатку шукаємо в ручному словнику (для старих вакансій)
+    if (i18n[baseText] && i18n[baseText][currentLang]) {
+        return i18n[baseText][currentLang];
+    }
+    
+    // 2. Якщо немає в словнику, шукаємо в базі даних (для нових, автоматичних вакансій)
     for (let job of allJobs) {
         if (job[fieldName] && job[fieldName].includes(baseText)) {
             const baseArr = job[fieldName].split(',').map(s => s.trim());
@@ -86,12 +107,18 @@ function getTranslatedDynamicField(baseText, fieldName) {
             }
         }
     }
-    return baseText; // Якщо переклад не знайдено, повертає оригінал
+    return baseText;
 }
 
 function applyUITranslations() {
+    // Переклад статичних текстів
     document.querySelectorAll('[data-i18n]').forEach(el => { el.innerText = t(el.getAttribute('data-i18n')); });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
+    
+    // Виправлений переклад Плейсхолдерів (Без багів!)
+    if (document.getElementById('searchInput')) document.getElementById('searchInput').placeholder = t('searchPlaceholder');
+    if (document.getElementById('partnerFilterInput')) document.getElementById('partnerFilterInput').placeholder = t('partnerPlaceholder');
+    if (document.getElementById('modalName')) document.getElementById('modalName').placeholder = t('modalNamePlaceholder');
+    if (document.getElementById('modalPhone')) document.getElementById('modalPhone').placeholder = t('modalPhonePlaceholder');
 }
 
 let allJobs = [];
@@ -135,7 +162,6 @@ function buildDynamicCheckboxes() {
     const rawAges = allJobs.flatMap(j => j.age ? j.age.split(',').map(s => s.trim()) : []);
     const ages = [...new Set(rawAges)].filter(Boolean);
 
-    // Тепер генеруємо фільтри, використовуючи переклад з бази даних
     document.getElementById('dynamicCountries').innerHTML = countries.map(c => `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="countries"> ${getTranslatedDynamicField(c, 'country')}</label>`).join('');
     document.getElementById('dynamicCategories').innerHTML = categories.map(c => `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="categories"> ${getTranslatedDynamicField(c, 'category')}</label>`).join('');
     document.getElementById('dynamicAges').innerHTML = ages.map(c => `<label><input type="checkbox" value="${c}" class="filter-cb" data-type="ages"> ${c}</label>`).join('');
@@ -364,6 +390,7 @@ function renderJobs() {
         const displayDesc = (currentLang === 'ua') ? job.desc : (job['desc_' + currentLang] || job.desc);
         const displayCountry = (currentLang === 'ua') ? job.country : (job['country_' + currentLang] || job.country);
         const displayCategory = (currentLang === 'ua') ? job.category : (job['category_' + currentLang] || job.category);
+        const displaySalary = (currentLang === 'ua') ? job.salary : (job['salary_' + currentLang] || job.salary); // <-- Переклад зарплати!
 
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = displayDesc; 
@@ -377,7 +404,6 @@ function renderJobs() {
         const formattedCategory = displayCategory ? displayCategory.split(',').map(s => s.trim()).join(', ') : '';
         const formattedAge = job.age ? job.age.split(',').map(s => s.trim()).join(', ') : '';
         
-        // Стать перекладаємо зі словника, оскільки вона фіксована
         const formattedGender = job.gender ? job.gender.split(',').map(s => t(s.trim())).join(', ') : '';
         
         let jobStatus = job.status || 'Актуальна';
@@ -410,7 +436,7 @@ function renderJobs() {
                         ${job.expireDate ? `<p style="color:#ef4444;"><i class="fas fa-hourglass-end"></i> ${t('untilDate')} ${job.expireDate}</p>` : ''}
                         ${job.minors === 'Так' ? `<p style="color:#f59e0b; font-weight:bold;"><i class="fas fa-child"></i> ${t('minorsOk')}</p>` : ''}
                     </div>
-                    <div class="job-salary">${job.salary}</div>
+                    <div class="job-salary">${displaySalary}</div>
                     
                     ${coverImageHtml}
                     
