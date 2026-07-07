@@ -1,6 +1,9 @@
+
+
 const databaseUrl = 'https://korsolutions-jobs-default-rtdb.europe-west1.firebasedatabase.app/jobs.json';
 const botToken = '8018570948:AAEP421r9xEg7R587HYdkCGJTwiV-s6zkl0';
 const chatId = '5426420290';
+
 
 let allJobs = [];
 let filteredJobs = [];
@@ -10,9 +13,12 @@ let jobsPerPage = 6;
 let activeFilters = { countries: [], categories: [], genders: [], ages: [] };
 let searchQuery = "";
 let expandedJobs = {};
-let isFirstLoad = true;
+let isFirstLoad = true; // Слідкує за тим, чи це перший захід на сайт
 
+// Завантажуємо збережені вакансії з пам'яті браузера
 let savedFavs = JSON.parse(localStorage.getItem('korsolutions_favs')) || [];
+
+
 
 function loadJobsFromDatabase() {
     document.getElementById('jobList').innerHTML = '<p style="text-align:center; grid-column: 1/-1; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Завантаження...</p>';
@@ -93,9 +99,11 @@ window.resetFilters = function() {
 }
 
 window.applyFilters = function() {
+    // 1. ПЕРЕВІРКА УНІКАЛЬНОГО ПОСИЛАННЯ
     const urlParams = new URLSearchParams(window.location.search);
     let specificJobId = urlParams.get('job');
 
+    // Якщо користувач почав користуватися фільтрами - скидаємо унікальне посилання, щоб показати всі вакансії
     if (!isFirstLoad && specificJobId) {
         const url = new URL(window.location);
         url.searchParams.delete('job');
@@ -117,6 +125,7 @@ window.applyFilters = function() {
     const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
     filteredJobs = allJobs.filter(job => {
+        // Якщо є унікальне посилання - ігноруємо всі фільтри і показуємо тільки цю вакансію!
         if (specificJobId) {
             return job.id === specificJobId;
         }
@@ -158,6 +167,7 @@ window.applyFilters = function() {
         return matchSearch && matchStatus && matchMinors && matchCountry && matchCategory && matchGender && matchAgeGroup && matchPartner && matchCity && matchRadius && matchFav;
     });
 
+    // Автоматично розгортаємо текст, якщо відкрито унікальне посилання
     if (specificJobId && filteredJobs.length === 1) {
         expandedJobs[specificJobId] = true;
     }
@@ -167,7 +177,7 @@ window.applyFilters = function() {
     else if (sortMode === 'name-asc') filteredJobs.sort((a, b) => a.title.localeCompare(b.title));
 
     currentPage = 1;
-    isFirstLoad = false;
+    isFirstLoad = false; // Вимикаємо прапорець першого завантаження
     renderActiveTags();
     renderJobs();
 }
@@ -189,6 +199,7 @@ window.removeFilter = function(type, val) {
     applyFilters();
 }
 
+// Функція трекінгу аналітики (записує кліки в БД)
 window.trackClick = function(id, type) {
     const url = `${databaseUrl.replace('.json', '')}/${id}/${type}.json`;
     fetch(url).then(r => r.json()).then(count => {
@@ -196,6 +207,7 @@ window.trackClick = function(id, type) {
     });
 }
 
+// Сердечко (Додати/Прибрати з обраного)
 window.toggleFav = function(id) {
     if(savedFavs.includes(id)) savedFavs = savedFavs.filter(x => x !== id);
     else savedFavs.push(id);
@@ -203,14 +215,16 @@ window.toggleFav = function(id) {
     applyFilters();
 }
 
+// Кнопка Поділитися (Генерує УНІКАЛЬНЕ посилання)
 window.shareJob = function(id) {
     const job = allJobs.find(j => j.id === id);
-    const jobUrl = `${window.location.origin}${window.location.pathname}?job=${id}`; 
+    const jobUrl = `${window.location.origin}${window.location.pathname}?job=${id}`; // Ось це посилання!
     const text = `🔥 Вакансія: ${job.title}\n💰 Зарплата: ${job.salary}\n🌍 Країна: ${job.country}\n\nДізнайся більше на сайті!`;
     
     if (navigator.share) {
         navigator.share({ title: job.title, text: text, url: jobUrl }).catch(err => console.log(err));
     } else {
+        // Для комп'ютерів просто копіюємо в буфер
         navigator.clipboard.writeText(text + '\n' + jobUrl).then(() => {
             document.getElementById('toastTitle').innerText = 'Скопійовано!';
             document.getElementById('toastDesc').innerText = 'Посилання скопійовано в буфер обміну.';
@@ -219,9 +233,10 @@ window.shareJob = function(id) {
     }
 }
 
+// Повна копія вакансії (Для рекрутерів)
 window.copyJob = function(id) {
     const job = allJobs.find(j => j.id === id);
-    const jobUrl = `${window.location.origin}${window.location.pathname}?job=${id}`;
+    const jobUrl = `${window.location.origin}${window.location.pathname}?job=${id}`; // Унікальне посилання
     
     const temp = document.createElement('div');
     temp.innerHTML = job.desc;
@@ -247,64 +262,6 @@ window.copyJob = function(id) {
     });
 }
 
-function generateJobCardHtml(job, isExpanded) {
-    const displayTitle = (currentLang === 'ua') ? job.title : (job['title_' + currentLang] || job.title);
-    const displayDesc = (currentLang === 'ua') ? job.desc : (job['desc_' + currentLang] || job.desc);
-
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = displayDesc;
-    const plainText = tempDiv.innerText || tempDiv.textContent || '';
-    
-    const isLong = plainText.length > 200; 
-    const wrapperClass = (isLong && !isExpanded) ? "desc-wrapper rich-text-box collapsed" : "desc-wrapper rich-text-box expanded";
-
-    const formattedCountry = job.country ? job.country.split(',').map(s => s.trim()).join(', ') : '';
-    const formattedCategory = job.category ? job.category.split(',').map(s => s.trim()).join(', ') : '';
-    const formattedAge = job.age ? job.age.split(',').map(s => s.trim()).join(', ') : '';
-    const formattedGender = job.gender ? job.gender.split(',').map(s => s.trim()).join(', ') : '';
-    
-    const d = new Date();
-    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    let jobStatus = job.status || 'Актуальна';
-    if (job.expireDate && job.expireDate < today) jobStatus = 'Неактуальна';
-    const isInactive = jobStatus === 'Неактуальна';
-    
-    const isFav = savedFavs.includes(job.id);
-    const coverImageHtml = job.image ? `<img src="${job.image}" class="job-cover-img" loading="lazy" alt="${displayTitle}">` : '';
-
-    return `
-        <div class="job-card ${isInactive ? 'inactive' : ''}" id="job-card-${job.id}">
-            <div class="action-buttons">
-                <button class="icon-btn" onclick="copyJob('${job.id}')" title="Скопіювати все"><i class="fas fa-copy"></i></button>
-                <button class="icon-btn fav ${isFav ? 'active' : ''}" onclick="toggleFav('${job.id}')" title="Зберегти"><i class="${isFav ? 'fas' : 'far'} fa-heart"></i></button>
-                <button class="icon-btn share" onclick="shareJob('${job.id}')" title="Поділитися"><i class="fas fa-share-alt"></i></button>
-            </div>
-            <div>
-                <div class="status-badge ${isInactive ? 'inactive' : 'active'}">${jobStatus}</div>
-                <h3>${displayTitle}</h3>
-                <div class="job-meta">
-                    <p><i class="fas fa-globe"></i> ${formattedCountry}</p>
-                    ${job.address ? `<p><i class="fas fa-map-marker-alt"></i> ${job.address}</p>` : ''}
-                    <p><i class="fas fa-tags"></i> ${formattedCategory}</p>
-                    ${formattedGender ? `<p><i class="fas fa-user"></i> ${formattedGender}</p>` : ''}
-                    ${formattedAge ? `<p><i class="fas fa-user-clock"></i> Вік: ${formattedAge}</p>` : ''}
-                    ${job.expireDate ? `<p style="color:#ef4444;"><i class="fas fa-hourglass-end"></i> До ${job.expireDate}</p>` : ''}
-                    ${job.minors === 'Так' ? `<p style="color:#f59e0b; font-weight:bold;"><i class="fas fa-child"></i> Можна до 18</p>` : ''}
-                </div>
-                <div class="job-salary">${job.salary}</div>
-                ${coverImageHtml}
-                <div class="${wrapperClass}">${displayDesc}</div>
-                ${isLong ? `
-                    <button class="read-more-btn" onclick="trackClick('${job.id}', 'views'); toggleJobDescription('${job.id}')">
-                        ${isExpanded ? 'Згорнути <i class="fas fa-angle-up"></i>' : 'Розгорнути <i class="fas fa-angle-down"></i>'}
-                    </button>
-                ` : ''}
-            </div>
-            <button class="btn-apply" onclick="trackClick('${job.id}', 'applies'); openModal('${displayTitle.replace(/'/g, "\\'")}')">Відгукнутися</button>
-        </div>
-    `;
-}
-
 function renderJobs() {
     const list = document.getElementById('jobList');
     list.innerHTML = '';
@@ -319,57 +276,72 @@ function renderJobs() {
         return;
     }
 
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
     jobsToShow.forEach(job => {
-        const isExpanded = expandedJobs[job.id] === true;
-        list.innerHTML += generateJobCardHtml(job, isExpanded);
-    });
 
-    renderPagination();
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const specificJobId = urlParams.get('job');
-
-    if (specificJobId && filteredJobs.length === 1) {
-        const currentJob = filteredJobs[0];
-
-        // Оновлення SEO
-        document.title = `${currentJob.title} | KorSolutions`;
         const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = currentJob.desc;
-        const plainDesc = (tempDiv.innerText || tempDiv.textContent).substring(0, 150) + '...';
+        tempDiv.innerHTML = displayDesc; // Використовуємо вже перекладений текст для перевірки довжини
+        const plainText = tempDiv.innerText || tempDiv.textContent || '';
+        
+        const isLong = plainText.length > 200; 
+        const isExpanded = expandedJobs[job.id] === true;
+        const wrapperClass = (isLong && !isExpanded) ? "desc-wrapper rich-text-box collapsed" : "desc-wrapper rich-text-box expanded";
 
-        if(document.getElementById('ogTitle')) document.getElementById('ogTitle').content = currentJob.title;
-        if(document.getElementById('ogDesc')) document.getElementById('ogDesc').content = plainDesc;
-        if(document.getElementById('ogUrl')) document.getElementById('ogUrl').content = window.location.href;
-        if(document.getElementById('ogImage') && currentJob.image) document.getElementById('ogImage').content = currentJob.image;
+        // ... (інші форматування лишаються без змін)
+        const formattedCountry = job.country ? job.country.split(',').map(s => s.trim()).join(', ') : '';
+        const formattedCategory = job.category ? job.category.split(',').map(s => s.trim()).join(', ') : '';
+        const formattedAge = job.age ? job.age.split(',').map(s => s.trim()).join(', ') : '';
+        const formattedGender = job.gender ? job.gender.split(',').map(s => s.trim()).join(', ') : '';
+        
+        let jobStatus = job.status || 'Актуальна';
+        if (job.expireDate && job.expireDate < today) jobStatus = 'Неактуальна';
+        const isInactive = jobStatus === 'Неактуальна';
+        
+        const isFav = savedFavs.includes(job.id);
+        const coverImageHtml = job.image ? `<img src="${job.image}" class="job-cover-img" loading="lazy" alt="${displayTitle}">` : '';
 
-        // Схожі вакансії
-        const currentCategories = currentJob.category ? currentJob.category.split(',').map(s=>s.trim()) : [];
-        const currentCountries = currentJob.country ? currentJob.country.split(',').map(s=>s.trim()) : [];
+        list.innerHTML += `
+            <div class="job-card ${isInactive ? 'inactive' : ''}" id="job-card-${job.id}">
+                <div class="action-buttons">
+                    <button class="icon-btn" onclick="copyJob('${job.id}')" title="Скопіювати все"><i class="fas fa-copy"></i></button>
+                    <button class="icon-btn fav ${isFav ? 'active' : ''}" onclick="toggleFav('${job.id}')" title="Зберегти"><i class="${isFav ? 'fas' : 'far'} fa-heart"></i></button>
+                    <button class="icon-btn share" onclick="shareJob('${job.id}')" title="Поділитися"><i class="fas fa-share-alt"></i></button>
+                </div>
 
-        let similarJobs = allJobs.filter(j => j.id !== currentJob.id && j.status !== 'Неактуальна').filter(j => {
-            const jCat = j.category ? j.category.split(',').map(s=>s.trim()) : [];
-            const jCou = j.country ? j.country.split(',').map(s=>s.trim()) : [];
-            return jCat.some(c => currentCategories.includes(c)) || jCou.some(c => currentCountries.includes(c));
-        });
-
-        similarJobs = similarJobs.slice(0, 2);
-
-        if (similarJobs.length > 0) {
-            let similarHtml = `<div style="grid-column: 1/-1; margin-top: 40px; padding-top: 30px; border-top: 2px dashed #cbd5e1;">
-                <h2 style="margin-bottom: 25px; color: #0f172a; text-align: center;"><i class="fas fa-clone" style="color: #3b82f6;"></i> Вас також можуть зацікавити:</h2>
-                <div class="jobs-grid">`;
-            
-            similarJobs.forEach(sJob => {
-                similarHtml += generateJobCardHtml(sJob, false);
-            });
-            
-            similarHtml += `</div></div>`;
-            list.innerHTML += similarHtml;
-        }
-    }
+                <div>
+                    <div class="status-badge ${isInactive ? 'inactive' : 'active'}">${jobStatus}</div>
+                    <h3>${displayTitle}</h3>
+                    <div class="job-meta">
+                        <p><i class="fas fa-globe"></i> ${formattedCountry}</p>
+                        ${job.address ? `<p><i class="fas fa-map-marker-alt"></i> ${job.address}</p>` : ''}
+                        <p><i class="fas fa-tags"></i> ${formattedCategory}</p>
+                        ${formattedGender ? `<p><i class="fas fa-user"></i> ${formattedGender}</p>` : ''}
+                        ${formattedAge ? `<p><i class="fas fa-user-clock"></i> Вік: ${formattedAge}</p>` : ''}
+                        ${job.expireDate ? `<p style="color:#ef4444;"><i class="fas fa-hourglass-end"></i> До ${job.expireDate}</p>` : ''}
+                        ${job.minors === 'Так' ? `<p style="color:#f59e0b; font-weight:bold;"><i class="fas fa-child"></i> Можна до 18</p>` : ''}
+                    </div>
+                    <div class="job-salary">${job.salary}</div>
+                    
+                    ${coverImageHtml}
+                    
+                    <div class="${wrapperClass}">
+                        ${displayDesc}
+                    </div>
+                    
+                    ${isLong ? `
+                        <button class="read-more-btn" onclick="trackClick('${job.id}', 'views'); toggleJobDescription('${job.id}')">
+                            ${isExpanded ? 'Згорнути <i class="fas fa-angle-up"></i>' : 'Розгорнути <i class="fas fa-angle-down"></i>'}
+                        </button>
+                    ` : ''}
+                </div>
+                <button class="btn-apply" onclick="trackClick('${job.id}', 'applies'); openModal('${displayTitle.replace(/'/g, "\\'")}')">Відгукнутися</button>
+            </div>
+        `;
+    });
+    renderPagination();
 }
-
 window.toggleJobDescription = function(id) { 
     const wasExpanded = expandedJobs[id];
     expandedJobs[id] = !expandedJobs[id]; 
@@ -434,3 +406,4 @@ document.getElementById('modalTgForm').addEventListener('submit', function(e) {
         body: JSON.stringify({ chat_id: chatId, text: `🔥 ВІДГУК НА ВАКАНСІЮ 🔥\n\n🎯 Вакансія: ${jobTitle}\n👤 Ім'я: ${name}\n📞 Телефон: ${phone}` })
     }).then(res => { if(res.ok) { showToast(); closeModal(); } });
 });
+
