@@ -1,19 +1,13 @@
 const databaseUrl = 'https://korsolutions-jobs-default-rtdb.europe-west1.firebasedatabase.app/jobs.json';
 const botToken = '8018570948:AAEP421r9xEg7R587HYdkCGJTwiV-s6zkl0';
 const chatId = '5426420290';
-const langStrings = {
-    ua: { title: "KorSolutions", subtitle: "Знайди свою ідеальну роботу", filters: "Фільтри", search: "Пошук...", apply: "Відгукнутися" },
-    en: { title: "KorSolutions", subtitle: "Find your ideal job", filters: "Filters", search: "Search...", apply: "Apply" },
-    pl: { title: "KorSolutions", subtitle: "Znajdź swoją idealną pracę", filters: "Filtry", search: "Szukaj...", apply: "Aplikuj" },
-    ru: { title: "KorSolutions", subtitle: "Найди свою идеальную работу", filters: "Фильтры", search: "Поиск...", apply: "Откликнуться" }
-};
+
 
 let allJobs = [];
 let filteredJobs = [];
 let currentPage = 1;
 let jobsPerPage = 6; 
 
-let currentLang = localStorage.getItem('lang') || 'ua';
 let activeFilters = { countries: [], categories: [], genders: [], ages: [] };
 let searchQuery = "";
 let expandedJobs = {};
